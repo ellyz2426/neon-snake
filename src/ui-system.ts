@@ -49,6 +49,10 @@ export class UISystem extends createSystem({
 		required: [PanelUI, PanelDocument],
 		where: [eq(PanelUI, 'config', './ui/toast.json')],
 	},
+	stats: {
+		required: [PanelUI, PanelDocument],
+		where: [eq(PanelUI, 'config', './ui/stats.json')],
+	},
 }) {
 	private game!: GameManager;
 	private hudDoc: UIKitDocument | null = null;
@@ -57,6 +61,7 @@ export class UISystem extends createSystem({
 	private pauseDoc: UIKitDocument | null = null;
 	private achvDoc: UIKitDocument | null = null;
 	private toastDoc: UIKitDocument | null = null;
+	private statsDoc: UIKitDocument | null = null;
 
 	// Panel entities for show/hide
 	private hudEntity: Entity | null = null;
@@ -65,10 +70,12 @@ export class UISystem extends createSystem({
 	private pauseEntity: Entity | null = null;
 	private achvEntity: Entity | null = null;
 	private toastEntity: Entity | null = null;
+	private statsEntity: Entity | null = null;
 
 	private selectedMode: GameMode = GameMode.Classic;
 	private selectedDifficulty: Difficulty = Difficulty.Normal;
 	private showingAchievements = false;
+	private showingStats = false;
 	private achvPage = 0;
 	private toastTimer = 0;
 	private toastQueue: { title: string; desc: string }[] = [];
@@ -127,6 +134,14 @@ export class UISystem extends createSystem({
 			this.toastEntity = entity;
 		});
 
+		this.queries.stats.subscribe('qualify', (entity) => {
+			const doc = PanelDocument.data.document[entity.index] as UIKitDocument;
+			if (!doc) return;
+			this.statsDoc = doc;
+			this.statsEntity = entity;
+			this.wireStats(doc);
+		});
+
 		// Wire achievement callback
 		this.game?.onAchievement && undefined; // placeholder - set in setRefs
 	}
@@ -143,8 +158,17 @@ export class UISystem extends createSystem({
 		const btnAchv = doc.getElementById('btn-achievements') as UIKit.Text | undefined;
 		btnAchv?.addEventListener('click', () => {
 			this.showingAchievements = true;
+			this.showingStats = false;
 			this.achvPage = 0;
 			this.updateAchievementsList();
+		});
+
+		// Stats button
+		const btnStats = doc.getElementById('btn-stats') as UIKit.Text | undefined;
+		btnStats?.addEventListener('click', () => {
+			this.showingStats = true;
+			this.showingAchievements = false;
+			this.updateStatsPanel();
 		});
 
 		// Mode buttons
@@ -209,6 +233,25 @@ export class UISystem extends createSystem({
 		btnQuit?.addEventListener('click', () => {
 			this.game.returnToMenu();
 		});
+	}
+
+	private wireStats(doc: UIKitDocument) {
+		const btnClose = doc.getElementById('btn-stats-close') as UIKit.Text | undefined;
+		btnClose?.addEventListener('click', () => {
+			this.showingStats = false;
+		});
+	}
+
+	private updateStatsPanel() {
+		if (!this.statsDoc) return;
+		const s = this.game.statsTracker.getStats();
+		setText(this.statsDoc, 'stat-longest', String(s.longestSnake));
+		setText(this.statsDoc, 'stat-survival', `${Math.floor(s.longestSurvival)}s`);
+		setText(this.statsDoc, 'stat-distance', String(s.totalDistance));
+		setText(this.statsDoc, 'stat-turns', String(s.totalTurns));
+		setText(this.statsDoc, 'stat-classic', String(s.classicBest));
+		setText(this.statsDoc, 'stat-speed', String(s.speedBest));
+		setText(this.statsDoc, 'stat-maze', String(s.mazeBest));
 	}
 
 	private wireAchievements(doc: UIKitDocument) {
@@ -319,12 +362,13 @@ export class UISystem extends createSystem({
 		const state = this.game.getState();
 
 		// Update panel visibility
-		const showMenu = state === GameState.Menu && !this.showingAchievements;
+		const showMenu = state === GameState.Menu && !this.showingAchievements && !this.showingStats;
 		this.setPanelVisible(this.hudEntity, state === GameState.Playing);
 		this.setPanelVisible(this.menuEntity, showMenu);
 		this.setPanelVisible(this.gameoverEntity, state === GameState.GameOver);
 		this.setPanelVisible(this.pauseEntity, state === GameState.Paused);
 		this.setPanelVisible(this.achvEntity, this.showingAchievements && state === GameState.Menu);
+		this.setPanelVisible(this.statsEntity, this.showingStats && state === GameState.Menu);
 
 		// Toast handling
 		if (this.toastTimer > 0) {

@@ -117,4 +117,18 @@
     cursor="pointer"
     marginTop="2"
   >Achievements</text>
+
+  <text
+    name="btn-stats"
+    fontSize="10"
+    color="#00ccff"
+    backgroundColor="#1a1a33"
+    padding="5"
+    paddingLeft="14"
+    paddingRight="14"
+    borderRadius="4"
+    borderColor="#00ccff66"
+    borderWidth="1"
+    cursor="pointer"
+  >Statistics</text>
 </container>

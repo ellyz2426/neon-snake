@@ -82,6 +82,12 @@ function createPanels(world: World): void {
 	toastEntity.object3D!.position.set(0, 1.85, -0.9);
 	toastEntity.addComponent(PanelUI, { config: './ui/toast.json', maxWidth: 400, maxHeight: 80 });
 	toastEntity.object3D!.visible = false;
+
+	// Stats panel
+	const statsEntity = world.createTransformEntity();
+	statsEntity.object3D!.position.set(0, 1.35, -1.2);
+	statsEntity.addComponent(PanelUI, { config: './ui/stats.json', maxWidth: 450, maxHeight: 600 });
+	statsEntity.object3D!.visible = false;
 }
 
 main().catch(console.error);

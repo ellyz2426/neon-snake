@@ -18,6 +18,8 @@ import {
 	Float32BufferAttribute,
 	BufferGeometry,
 	AdditiveBlending,
+	Points,
+	PointsMaterial,
 } from '@iwsdk/core';
 import type { World } from '@iwsdk/core';
 import { GRID_SIZE, CELL_SIZE, BOARD_Y, BOARD_Z } from './types';
@@ -28,8 +30,8 @@ export function createArena(world: World): Group {
 	world.scene.add(arena);
 
 	// Dark fog
-	world.scene.fog = new FogExp2(0x000811, 0.15);
-	world.scene.background = new Color(0x000811);
+	world.scene.fog = new FogExp2(0x000811, 0.12);
+	world.scene.background = new Color(0x000308);
 
 	// Lighting
 	const ambient = new AmbientLight(0x1a1a3a, 0.6);
@@ -38,6 +40,20 @@ export function createArena(world: World): Group {
 	const mainLight = new DirectionalLight(0x6688ff, 0.4);
 	mainLight.position.set(0, 5, 2);
 	world.scene.add(mainLight);
+
+	// Starfield
+	const starCount = 200;
+	const starGeo = new BufferGeometry();
+	const starPositions = new Float32Array(starCount * 3);
+	for (let i = 0; i < starCount; i++) {
+		starPositions[i * 3] = (Math.random() - 0.5) * 20;
+		starPositions[i * 3 + 1] = Math.random() * 8 + 1;
+		starPositions[i * 3 + 2] = (Math.random() - 0.5) * 20 - 3;
+	}
+	starGeo.setAttribute('position', new Float32BufferAttribute(starPositions, 3));
+	const starMat = new PointsMaterial({ color: 0x4466aa, size: 0.02, transparent: true, opacity: 0.6 });
+	const stars = new Points(starGeo, starMat);
+	world.scene.add(stars);
 
 	// Board base
 	const boardWidth = GRID_SIZE * CELL_SIZE;

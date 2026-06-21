@@ -24,6 +24,7 @@ import { gridToWorld } from './arena';
 import { AudioManager } from './audio';
 import { AchievementManager, type GameStats } from './achievements';
 import { ParticleSystem } from './particles';
+import { StatsTracker } from './stats';
 
 // Maze layouts: arrays of obstacle positions
 const MAZE_LAYOUTS: GridPos[][] = [
@@ -105,6 +106,10 @@ export class GameManager {
 	readonly audio: AudioManager;
 	readonly achievements: AchievementManager;
 	readonly particles: ParticleSystem;
+	readonly statsTracker: StatsTracker;
+
+	private moveCount = 0;
+	private turnCount = 0;
 
 	// Callbacks for UI updates
 	onScoreChange?: (score: number, highScore: number, length: number) => void;
@@ -126,6 +131,7 @@ export class GameManager {
 		this.audio = new AudioManager();
 		this.achievements = new AchievementManager();
 		this.particles = new ParticleSystem(arenaGroup);
+		this.statsTracker = new StatsTracker();
 
 		// Init audio on first interaction
 		const initAudio = () => this.audio.init();
@@ -160,6 +166,8 @@ export class GameManager {
 		this.deathByWall = false;
 		this.deathBySelf = false;
 		this.deathByObstacle = false;
+		this.moveCount = 0;
+		this.turnCount = 0;
 		this.moveInterval = DIFFICULTY_SPEEDS[this.config.difficulty];
 
 		// Initialize snake at center
@@ -199,8 +207,9 @@ export class GameManager {
 			[Direction.Left]: Direction.Right,
 			[Direction.Right]: Direction.Left,
 		};
-		if (dir !== opposite[this.direction]) {
+		if (dir !== opposite[this.direction] && dir !== this.nextDirection) {
 			this.nextDirection = dir;
+			this.turnCount++;
 		}
 	}
 
@@ -269,6 +278,7 @@ export class GameManager {
 
 	private moveSnake() {
 		const head = { ...this.snake[0] };
+		this.moveCount++;
 
 		switch (this.direction) {
 			case Direction.Up: head.z--; break;
@@ -381,6 +391,16 @@ export class GameManager {
 			this.audio.playAchievement();
 			this.onAchievement?.(ach.title, ach.description);
 		}
+
+		// Save stats
+		this.statsTracker.updateAfterGame(
+			this.score,
+			this.snake.length,
+			this.sessionTime,
+			this.moveCount,
+			this.turnCount,
+			this.config.mode,
+		);
 
 		this.onStateChange?.(this.state, this.score);
 	}
