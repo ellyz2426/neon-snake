@@ -241,6 +241,28 @@
           "margintop": "4"
         },
         "dataUid": "uid-17"
+      },
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "Achievements"
+        ],
+        "properties": {
+          "name": "btn-achievements",
+          "fontsize": "10",
+          "color": "#ffaa00",
+          "backgroundcolor": "#1a1a33",
+          "padding": "5",
+          "paddingleft": "14",
+          "paddingright": "14",
+          "borderradius": "4",
+          "bordercolor": "#ffaa0066",
+          "borderwidth": "1",
+          "cursor": "pointer",
+          "margintop": "2"
+        },
+        "dataUid": "uid-18"
       }
     ],
     "properties": {
@@ -267,7 +289,7 @@
         "column": 0
       },
       "end": {
-        "line": 104,
+        "line": 119,
         "column": 12
       }
     },
@@ -429,6 +451,16 @@
       "end": {
         "line": 103,
         "column": 91
+      }
+    },
+    "uid-18": {
+      "start": {
+        "line": 105,
+        "column": 2
+      },
+      "end": {
+        "line": 118,
+        "column": 22
       }
     }
   }

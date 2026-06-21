@@ -21,6 +21,9 @@ import {
 	type GameConfig,
 } from './types';
 import { gridToWorld } from './arena';
+import { AudioManager } from './audio';
+import { AchievementManager, type GameStats } from './achievements';
+import { ParticleSystem } from './particles';
 
 // Maze layouts: arrays of obstacle positions
 const MAZE_LAYOUTS: GridPos[][] = [
@@ -92,11 +95,22 @@ export class GameManager {
 	private animTime = 0;
 	private comboCount = 0;
 	private comboTimer = 0;
+	private maxCombo = 0;
+	private sessionTime = 0;
+	private deathByWall = false;
+	private deathBySelf = false;
+	private deathByObstacle = false;
+
+	// Subsystems
+	readonly audio: AudioManager;
+	readonly achievements: AchievementManager;
+	readonly particles: ParticleSystem;
 
 	// Callbacks for UI updates
 	onScoreChange?: (score: number, highScore: number, length: number) => void;
 	onStateChange?: (state: GameState, score?: number) => void;
 	onCombo?: (count: number) => void;
+	onAchievement?: (title: string, desc: string) => void;
 
 	constructor(world: World, arenaGroup: Group) {
 		this.world = world;
@@ -108,6 +122,15 @@ export class GameManager {
 		arenaGroup.add(this.snakeGroup);
 		arenaGroup.add(this.foodGroup);
 		arenaGroup.add(this.obstacleGroup);
+
+		this.audio = new AudioManager();
+		this.achievements = new AchievementManager();
+		this.particles = new ParticleSystem(arenaGroup);
+
+		// Init audio on first interaction
+		const initAudio = () => this.audio.init();
+		document.addEventListener('click', initAudio, { once: true });
+		document.addEventListener('touchstart', initAudio, { once: true });
 
 		// Load high score
 		try {
@@ -131,7 +154,12 @@ export class GameManager {
 		this.score = 0;
 		this.comboCount = 0;
 		this.comboTimer = 0;
+		this.maxCombo = 0;
 		this.moveTimer = 0;
+		this.sessionTime = 0;
+		this.deathByWall = false;
+		this.deathBySelf = false;
+		this.deathByObstacle = false;
 		this.moveInterval = DIFFICULTY_SPEEDS[this.config.difficulty];
 
 		// Initialize snake at center
@@ -158,6 +186,7 @@ export class GameManager {
 
 		this.state = GameState.Playing;
 		this.gamesPlayed++;
+		this.audio.playStart();
 		this.onStateChange?.(this.state);
 		this.onScoreChange?.(this.score, this.highScore, this.snake.length);
 	}
@@ -178,6 +207,7 @@ export class GameManager {
 	pause() {
 		if (this.state === GameState.Playing) {
 			this.state = GameState.Paused;
+			this.audio.playPause();
 			this.onStateChange?.(this.state);
 		}
 	}
@@ -185,6 +215,7 @@ export class GameManager {
 	resume() {
 		if (this.state === GameState.Paused) {
 			this.state = GameState.Playing;
+			this.audio.playMenuSelect();
 			this.onStateChange?.(this.state);
 		}
 	}
@@ -202,11 +233,15 @@ export class GameManager {
 
 	update(delta: number) {
 		this.animTime += delta;
+		this.particles.update(delta);
+		this.achievements.updateTime(delta);
 
 		if (this.state !== GameState.Playing) {
 			this.animateIdle(delta);
 			return;
 		}
+
+		this.sessionTime += delta;
 
 		// Combo timer
 		if (this.comboTimer > 0) {
@@ -244,6 +279,7 @@ export class GameManager {
 
 		// Wall collision
 		if (head.x < 0 || head.x >= GRID_SIZE || head.z < 0 || head.z >= GRID_SIZE) {
+			this.deathByWall = true;
 			this.gameOver();
 			return;
 		}
@@ -251,6 +287,7 @@ export class GameManager {
 		// Self collision
 		for (const seg of this.snake) {
 			if (seg.x === head.x && seg.z === head.z) {
+				this.deathBySelf = true;
 				this.gameOver();
 				return;
 			}
@@ -259,6 +296,7 @@ export class GameManager {
 		// Obstacle collision
 		for (const obs of this.obstacles) {
 			if (obs.x === head.x && obs.z === head.z) {
+				this.deathByObstacle = true;
 				this.gameOver();
 				return;
 			}
@@ -280,13 +318,23 @@ export class GameManager {
 		// Combo system
 		this.comboCount++;
 		this.comboTimer = 3.0;
+		if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
 		const comboMultiplier = Math.min(this.comboCount, 5);
 		const points = 10 * comboMultiplier;
 		this.score += points;
 		this.totalFoodEaten++;
 
+		// Audio
+		this.audio.playEat(this.comboCount);
+
+		// Particles at food location
+		const foodPos = gridToWorld(this.food.x, this.food.z);
+		this.particles.spawnEatEffect(foodPos, 0x00ff88);
+
 		if (this.comboCount > 1) {
 			this.onCombo?.(this.comboCount);
+			this.audio.playCombo(this.comboCount);
+			this.particles.spawnComboEffect(foodPos, this.comboCount);
 		}
 
 		if (this.score > this.highScore) {
@@ -300,6 +348,40 @@ export class GameManager {
 
 	private gameOver() {
 		this.state = GameState.GameOver;
+		this.audio.playDeath();
+
+		// Death particles at snake head
+		if (this.snake.length > 0) {
+			const headPos = gridToWorld(this.snake[0].x, this.snake[0].z);
+			this.particles.spawnDeathEffect(headPos);
+		}
+
+		// Check achievements
+		const stats: GameStats = {
+			score: this.score,
+			highScore: this.highScore,
+			snakeLength: this.snake.length,
+			totalFoodEaten: this.totalFoodEaten,
+			gamesPlayed: this.gamesPlayed,
+			maxCombo: this.maxCombo,
+			currentCombo: this.comboCount,
+			deathByWall: this.deathByWall,
+			deathBySelf: this.deathBySelf,
+			deathByObstacle: this.deathByObstacle,
+			mode: this.config.mode,
+			difficulty: this.config.difficulty,
+			perfectGame: false,
+			speedModeMaxSpeed: 0,
+			mazeCompleted: false,
+			timePlayed: this.achievements.getTotalTime(),
+		};
+
+		const newAchs = this.achievements.check(stats);
+		for (const ach of newAchs) {
+			this.audio.playAchievement();
+			this.onAchievement?.(ach.title, ach.description);
+		}
+
 		this.onStateChange?.(this.state, this.score);
 	}
 

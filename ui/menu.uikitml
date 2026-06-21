@@ -102,4 +102,19 @@
   >START</text>
 
   <text fontSize="9" color="#445566" marginTop="4">Arrow keys / WASD / XR Thumbstick</text>
+
+  <text
+    name="btn-achievements"
+    fontSize="10"
+    color="#ffaa00"
+    backgroundColor="#1a1a33"
+    padding="5"
+    paddingLeft="14"
+    paddingRight="14"
+    borderRadius="4"
+    borderColor="#ffaa0066"
+    borderWidth="1"
+    cursor="pointer"
+    marginTop="2"
+  >Achievements</text>
 </container>

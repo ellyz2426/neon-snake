@@ -70,6 +70,18 @@ function createPanels(world: World): void {
 	pauseEntity.object3D!.position.set(0, 1.35, -1.2);
 	pauseEntity.addComponent(PanelUI, { config: './ui/pause.json', maxWidth: 400, maxHeight: 400 });
 	pauseEntity.object3D!.visible = false;
+
+	// Achievements panel
+	const achvEntity = world.createTransformEntity();
+	achvEntity.object3D!.position.set(0, 1.35, -1.2);
+	achvEntity.addComponent(PanelUI, { config: './ui/trophies.json', maxWidth: 500, maxHeight: 700 });
+	achvEntity.object3D!.visible = false;
+
+	// Toast notification
+	const toastEntity = world.createTransformEntity();
+	toastEntity.object3D!.position.set(0, 1.85, -0.9);
+	toastEntity.addComponent(PanelUI, { config: './ui/toast.json', maxWidth: 400, maxHeight: 80 });
+	toastEntity.object3D!.visible = false;
 }
 
 main().catch(console.error);
