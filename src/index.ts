@@ -52,7 +52,7 @@ function createPanels(world: World): void {
 	// HUD - positioned above the board
 	const hudEntity = world.createTransformEntity();
 	hudEntity.object3D!.position.set(0, 1.65, -1.0);
-	hudEntity.addComponent(PanelUI, { config: './ui/hud.json', maxWidth: 500, maxHeight: 100 });
+	hudEntity.addComponent(PanelUI, { config: './ui/hud.json', maxWidth: 500, maxHeight: 120 });
 
 	// Menu panel
 	const menuEntity = world.createTransformEntity();
@@ -86,7 +86,7 @@ function createPanels(world: World): void {
 	// Stats panel
 	const statsEntity = world.createTransformEntity();
 	statsEntity.object3D!.position.set(0, 1.35, -1.2);
-	statsEntity.addComponent(PanelUI, { config: './ui/stats.json', maxWidth: 450, maxHeight: 600 });
+	statsEntity.addComponent(PanelUI, { config: './ui/stats.json', maxWidth: 450, maxHeight: 650 });
 	statsEntity.object3D!.visible = false;
 
 	// Leaderboard panel
@@ -94,6 +94,12 @@ function createPanels(world: World): void {
 	lbEntity.object3D!.position.set(0, 1.35, -1.2);
 	lbEntity.addComponent(PanelUI, { config: './ui/lboard.json', maxWidth: 450, maxHeight: 700 });
 	lbEntity.object3D!.visible = false;
+
+	// Settings panel
+	const settingsEntity = world.createTransformEntity();
+	settingsEntity.object3D!.position.set(0, 1.35, -1.2);
+	settingsEntity.addComponent(PanelUI, { config: './ui/settings.json', maxWidth: 450, maxHeight: 500 });
+	settingsEntity.object3D!.visible = false;
 }
 
 main().catch(console.error);

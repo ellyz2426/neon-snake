@@ -43,6 +43,14 @@
       <text fontSize="10" color="#aa44ff">Maze Best</text>
       <text name="stat-maze" fontSize="10" color="#aa44ff" fontWeight="bold">0</text>
     </container>
+    <container flexDirection="row" justifyContent="space-between" width="100%" padding="3" backgroundColor="#0a1133" borderRadius="4">
+      <text fontSize="10" color="#ff44aa">Wrap Best</text>
+      <text name="stat-wrap" fontSize="10" color="#ff44aa" fontWeight="bold">0</text>
+    </container>
+    <container flexDirection="row" justifyContent="space-between" width="100%" padding="3" backgroundColor="#0a1133" borderRadius="4">
+      <text fontSize="10" color="#ff8800">Daily Best</text>
+      <text name="stat-daily" fontSize="10" color="#ff8800" fontWeight="bold">0</text>
+    </container>
   </container>
 
   <text name="btn-stats-close" fontSize="12" color="#aaaacc" backgroundColor="#222244" padding="5" paddingLeft="16" paddingRight="16" borderRadius="4" cursor="pointer" marginTop="6">CLOSE</text>

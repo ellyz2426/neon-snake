@@ -1,79 +1,41 @@
 # Neon Snake VR
 
-A classic snake game reimagined on a neon-lit tabletop in VR. Built with [IWSDK](https://iwsdk.dev) — playable in browser and Meta Quest headsets.
+A neon-themed Snake game built with IWSDK for browser and VR.
 
-**[▶ Play Now](https://ellyz2426.github.io/neon-snake/)**
+**[Play Now](https://ellyz2426.github.io/neon-snake/)**
 
 ## Features
 
-### 4 Game Modes
-- **Classic** — Standard snake with wall collision
-- **Speed** — Accelerates as you score higher
-- **Maze** — Navigate through obstacle patterns (6 unique layouts)
-- **Wrap** — No walls; snake wraps around edges
+### 5 Game Modes
+- **Classic** — standard snake gameplay
+- **Speed** — snake accelerates as you score
+- **Maze** — navigate around obstacles (8 layouts)
+- **Wrap** — snake wraps around edges
+- **Daily Challenge** — seeded maze that changes each day
 
 ### 3 Difficulty Levels
-- Easy / Normal / Hard (controls move speed)
+Easy, Normal, Hard — each with different snake speeds
 
-### Power-Ups
-- ⚡ **Speed Boost** — Move faster for 5 seconds
-- 🛡️ **Shield** — Invincibility for 4 seconds
-- ✖️ **2X Score** — Double points for 6 seconds
-- 🟢 **Shrink** — Remove 3 tail segments
-- 🔵 **Slow Motion** — Reduced speed for 5 seconds
+### 5 Snake Skins
+Neon Green, Cyber Blue, Fire Red, Gold Rush, Ultraviolet — selectable from Settings
 
-### Progression
-- Level system (every 8 food eaten increases level + speed)
-- Combo scoring (eat food quickly for multipliers up to 5x)
-- 30 achievements with persistence
-- Local leaderboard (top 10 scores)
-- Per-mode statistics tracking
+### 60+ Achievements
+Length, score, combo, mode-specific, difficulty, time, power-up, and special achievements with paginated browser
+
+### Power-Up System (5 types)
+Speed Boost, Invincibility Shield, 2X Score, Shrink, Slow Motion — active power-ups shown on HUD
+
+### 9 PanelUI Spatial Panels
+HUD, main menu, game over, pause, achievements, statistics, leaderboard, settings, toast notifications
 
 ### Visual Effects
-- Neon grid arena with glowing borders
-- Snake trail effects that fade behind you
-- Particle effects on eat, combo, and death
-- Screen shake on death
-- Starfield background with fog
-- Power-up color changes on snake head
-- Animated food with pulsing glow
+Neon grid arena, glowing borders, starfield background, particle effects, snake trails, screen shake, animated food, head bobbing
 
-### Audio
-- Procedural synth audio via Web Audio API
-- Eat, combo, death, start, pause, power-up, level-up, achievement sounds
+### Procedural Audio
+10+ synth sound types with volume control and mute from Settings panel
 
 ### Controls
-| Action | Keyboard | VR Controller |
-|--------|----------|---------------|
-| Move | Arrow Keys / WASD | Thumbstick |
-| Start / Confirm | Space / Enter | Right Trigger |
-| Pause / Resume | Escape / P | A Button |
+- **Keyboard**: Arrow keys / WASD, P/Escape for pause, Space/Enter to start
+- **XR Controllers**: Thumbstick for direction, trigger to start, A button for pause
 
-### UI Panels (All PanelUI/uikitml)
-8 spatial UI panels — no HTML DOM overlays:
-1. HUD (score, length, best)
-2. Main Menu (mode, difficulty, start)
-3. Game Over (final stats, retry, menu)
-4. Pause (resume, quit)
-5. Achievements (30 entries, paginated)
-6. Toast Notifications
-7. Statistics
-8. Leaderboard (top 10)
-
-## Tech
-
-- IWSDK v0.4.x (Three.js r181 + EliCS v3.4.2)
-- TypeScript, Vite 7, PanelUI with uikitml
-- ~3,100 lines of source code
-- Browser-first with XR support
-
-## Development
-
-```bash
-npm install
-npm run dev
-```
-
-## License
-
-MIT
+Built with [IWSDK](https://iwsdk.dev) (Immersive Web SDK)

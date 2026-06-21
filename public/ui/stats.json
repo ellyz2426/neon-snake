@@ -306,6 +306,88 @@
               "borderradius": "4"
             },
             "dataUid": "uid-22"
+          },
+          {
+            "sourceTag": "container",
+            "type": "custom",
+            "children": [
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
+                  "Wrap Best"
+                ],
+                "properties": {
+                  "fontsize": "10",
+                  "color": "#ff44aa"
+                },
+                "dataUid": "uid-26"
+              },
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
+                  "0"
+                ],
+                "properties": {
+                  "name": "stat-wrap",
+                  "fontsize": "10",
+                  "color": "#ff44aa",
+                  "fontweight": "bold"
+                },
+                "dataUid": "uid-27"
+              }
+            ],
+            "properties": {
+              "flexdirection": "row",
+              "justifycontent": "space-between",
+              "width": "100%",
+              "padding": "3",
+              "backgroundcolor": "#0a1133",
+              "borderradius": "4"
+            },
+            "dataUid": "uid-25"
+          },
+          {
+            "sourceTag": "container",
+            "type": "custom",
+            "children": [
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
+                  "Daily Best"
+                ],
+                "properties": {
+                  "fontsize": "10",
+                  "color": "#ff8800"
+                },
+                "dataUid": "uid-29"
+              },
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
+                  "0"
+                ],
+                "properties": {
+                  "name": "stat-daily",
+                  "fontsize": "10",
+                  "color": "#ff8800",
+                  "fontweight": "bold"
+                },
+                "dataUid": "uid-30"
+              }
+            ],
+            "properties": {
+              "flexdirection": "row",
+              "justifycontent": "space-between",
+              "width": "100%",
+              "padding": "3",
+              "backgroundcolor": "#0a1133",
+              "borderradius": "4"
+            },
+            "dataUid": "uid-28"
           }
         ],
         "properties": {
@@ -334,7 +416,7 @@
           "cursor": "pointer",
           "margintop": "6"
         },
-        "dataUid": "uid-25"
+        "dataUid": "uid-31"
       }
     ],
     "properties": {
@@ -361,7 +443,7 @@
         "column": 0
       },
       "end": {
-        "line": 48,
+        "line": 56,
         "column": 12
       }
     },
@@ -381,7 +463,7 @@
         "column": 2
       },
       "end": {
-        "line": 45,
+        "line": 53,
         "column": 14
       }
     },
@@ -597,11 +679,71 @@
     },
     "uid-25": {
       "start": {
+        "line": 45,
+        "column": 4
+      },
+      "end": {
+        "line": 48,
+        "column": 16
+      }
+    },
+    "uid-26": {
+      "start": {
+        "line": 46,
+        "column": 6
+      },
+      "end": {
+        "line": 46,
+        "column": 58
+      }
+    },
+    "uid-27": {
+      "start": {
         "line": 47,
-        "column": 2
+        "column": 6
       },
       "end": {
         "line": 47,
+        "column": 85
+      }
+    },
+    "uid-28": {
+      "start": {
+        "line": 49,
+        "column": 4
+      },
+      "end": {
+        "line": 52,
+        "column": 16
+      }
+    },
+    "uid-29": {
+      "start": {
+        "line": 50,
+        "column": 6
+      },
+      "end": {
+        "line": 50,
+        "column": 59
+      }
+    },
+    "uid-30": {
+      "start": {
+        "line": 51,
+        "column": 6
+      },
+      "end": {
+        "line": 51,
+        "column": 86
+      }
+    },
+    "uid-31": {
+      "start": {
+        "line": 55,
+        "column": 2
+      },
+      "end": {
+        "line": 55,
         "column": 194
       }
     }

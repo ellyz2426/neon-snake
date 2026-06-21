@@ -1,6 +1,6 @@
 import { createSystem } from '@iwsdk/core';
 import type { GameManager } from './game';
-import { Direction, GameState } from './types';
+import { Direction, GameState, GameMode } from './types';
 
 export class GameSystem extends createSystem({}) {
 	private game!: GameManager;

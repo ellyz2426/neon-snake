@@ -8,8 +8,7 @@ import {
 } from '@iwsdk/core';
 import type { Entity } from '@iwsdk/core';
 import type { GameManager } from './game';
-import { GameState, GameMode, Difficulty } from './types';
-import type { Achievement } from './achievements';
+import { GameState, GameMode, Difficulty, SnakeSkin, SNAKE_SKIN_DEFS } from './types';
 
 function setText(doc: UIKitDocument | undefined, id: string, text: string) {
 	if (!doc) return;
@@ -56,6 +55,10 @@ export class UISystem extends createSystem({
 		required: [PanelUI, PanelDocument],
 		where: [eq(PanelUI, 'config', './ui/lboard.json')],
 	},
+	settings: {
+		required: [PanelUI, PanelDocument],
+		where: [eq(PanelUI, 'config', './ui/settings.json')],
+	},
 }) {
 	private game!: GameManager;
 	private hudDoc: UIKitDocument | null = null;
@@ -66,6 +69,7 @@ export class UISystem extends createSystem({
 	private toastDoc: UIKitDocument | null = null;
 	private statsDoc: UIKitDocument | null = null;
 	private lbDoc: UIKitDocument | null = null;
+	private settingsDoc: UIKitDocument | null = null;
 
 	private hudEntity: Entity | null = null;
 	private menuEntity: Entity | null = null;
@@ -75,15 +79,18 @@ export class UISystem extends createSystem({
 	private toastEntity: Entity | null = null;
 	private statsEntity: Entity | null = null;
 	private lbEntity: Entity | null = null;
+	private settingsEntity: Entity | null = null;
 
 	private selectedMode: GameMode = GameMode.Classic;
 	private selectedDifficulty: Difficulty = Difficulty.Normal;
 	private showingAchievements = false;
 	private showingStats = false;
 	private showingLeaderboard = false;
+	private showingSettings = false;
 	private achvPage = 0;
 	private toastTimer = 0;
 	private toastQueue: { title: string; desc: string }[] = [];
+	private volume = 50;
 
 	setRefs(refs: { game: GameManager }) {
 		this.game = refs.game;
@@ -95,6 +102,11 @@ export class UISystem extends createSystem({
 		};
 		this.game.onLevelUp = (level: number) => {
 			this.toastQueue.push({ title: 'LEVEL UP', desc: `Level ${level}` });
+		};
+		this.game.onCombo = (count: number) => {
+			if (count >= 3) {
+				this.toastQueue.push({ title: 'COMBO', desc: `${count}x Multiplier!` });
+			}
 		};
 	}
 
@@ -160,6 +172,14 @@ export class UISystem extends createSystem({
 			this.lbEntity = entity;
 			this.wireLeaderboard(doc);
 		});
+
+		this.queries.settings.subscribe('qualify', (entity) => {
+			const doc = PanelDocument.data.document[entity.index] as UIKitDocument;
+			if (!doc) return;
+			this.settingsDoc = doc;
+			this.settingsEntity = entity;
+			this.wireSettings(doc);
+		});
 	}
 
 	private wireMenu(doc: UIKitDocument) {
@@ -175,6 +195,7 @@ export class UISystem extends createSystem({
 			this.showingAchievements = true;
 			this.showingStats = false;
 			this.showingLeaderboard = false;
+			this.showingSettings = false;
 			this.achvPage = 0;
 			this.updateAchievementsList();
 		});
@@ -184,6 +205,7 @@ export class UISystem extends createSystem({
 			this.showingStats = true;
 			this.showingAchievements = false;
 			this.showingLeaderboard = false;
+			this.showingSettings = false;
 			this.updateStatsPanel();
 		});
 
@@ -192,49 +214,48 @@ export class UISystem extends createSystem({
 			this.showingLeaderboard = true;
 			this.showingAchievements = false;
 			this.showingStats = false;
+			this.showingSettings = false;
 			this.updateLeaderboard();
 		});
 
-		// Mode buttons
-		const btnClassic = doc.getElementById('btn-classic') as UIKit.Text | undefined;
-		const btnSpeed = doc.getElementById('btn-speed') as UIKit.Text | undefined;
-		const btnMaze = doc.getElementById('btn-maze') as UIKit.Text | undefined;
-		const btnWrap = doc.getElementById('btn-wrap') as UIKit.Text | undefined;
+		const btnSettings = doc.getElementById('btn-settings') as UIKit.Text | undefined;
+		btnSettings?.addEventListener('click', () => {
+			this.showingSettings = true;
+			this.showingAchievements = false;
+			this.showingStats = false;
+			this.showingLeaderboard = false;
+			this.updateSettingsSkins();
+		});
 
-		btnClassic?.addEventListener('click', () => {
-			this.selectedMode = GameMode.Classic;
-			this.updateModeButtons();
-		});
-		btnSpeed?.addEventListener('click', () => {
-			this.selectedMode = GameMode.Speed;
-			this.updateModeButtons();
-		});
-		btnMaze?.addEventListener('click', () => {
-			this.selectedMode = GameMode.Maze;
-			this.updateModeButtons();
-		});
-		btnWrap?.addEventListener('click', () => {
-			this.selectedMode = GameMode.Wrap;
-			this.updateModeButtons();
-		});
+		// Mode buttons
+		const modes: { id: string; mode: GameMode }[] = [
+			{ id: 'btn-classic', mode: GameMode.Classic },
+			{ id: 'btn-speed', mode: GameMode.Speed },
+			{ id: 'btn-maze', mode: GameMode.Maze },
+			{ id: 'btn-wrap', mode: GameMode.Wrap },
+			{ id: 'btn-daily', mode: GameMode.Daily },
+		];
+		for (const { id, mode } of modes) {
+			const btn = doc.getElementById(id) as UIKit.Text | undefined;
+			btn?.addEventListener('click', () => {
+				this.selectedMode = mode;
+				this.updateModeButtons();
+			});
+		}
 
 		// Difficulty buttons
-		const btnEasy = doc.getElementById('btn-easy') as UIKit.Text | undefined;
-		const btnNormal = doc.getElementById('btn-normal') as UIKit.Text | undefined;
-		const btnHard = doc.getElementById('btn-hard') as UIKit.Text | undefined;
-
-		btnEasy?.addEventListener('click', () => {
-			this.selectedDifficulty = Difficulty.Easy;
-			this.updateDiffButtons();
-		});
-		btnNormal?.addEventListener('click', () => {
-			this.selectedDifficulty = Difficulty.Normal;
-			this.updateDiffButtons();
-		});
-		btnHard?.addEventListener('click', () => {
-			this.selectedDifficulty = Difficulty.Hard;
-			this.updateDiffButtons();
-		});
+		const diffs: { id: string; diff: Difficulty }[] = [
+			{ id: 'btn-easy', diff: Difficulty.Easy },
+			{ id: 'btn-normal', diff: Difficulty.Normal },
+			{ id: 'btn-hard', diff: Difficulty.Hard },
+		];
+		for (const { id, diff } of diffs) {
+			const btn = doc.getElementById(id) as UIKit.Text | undefined;
+			btn?.addEventListener('click', () => {
+				this.selectedDifficulty = diff;
+				this.updateDiffButtons();
+			});
+		}
 
 		this.updateModeButtons();
 		this.updateDiffButtons();
@@ -278,6 +299,77 @@ export class UISystem extends createSystem({
 		});
 	}
 
+	private wireSettings(doc: UIKitDocument) {
+		const btnClose = doc.getElementById('btn-settings-close') as UIKit.Text | undefined;
+		btnClose?.addEventListener('click', () => {
+			this.showingSettings = false;
+		});
+
+		// Skin buttons
+		for (let i = 0; i < SNAKE_SKIN_DEFS.length; i++) {
+			const btn = doc.getElementById(`btn-skin-${i}`) as UIKit.Text | undefined;
+			btn?.addEventListener('click', () => {
+				this.game.setSkin(SNAKE_SKIN_DEFS[i].id);
+				this.updateSettingsSkins();
+			});
+		}
+
+		// Volume buttons
+		const btnVolDown = doc.getElementById('btn-vol-down') as UIKit.Text | undefined;
+		btnVolDown?.addEventListener('click', () => {
+			this.volume = Math.max(0, this.volume - 10);
+			this.game.audio.setVolume(this.volume / 100);
+			this.updateVolumeDisplay();
+		});
+
+		const btnVolUp = doc.getElementById('btn-vol-up') as UIKit.Text | undefined;
+		btnVolUp?.addEventListener('click', () => {
+			this.volume = Math.min(100, this.volume + 10);
+			this.game.audio.setVolume(this.volume / 100);
+			this.updateVolumeDisplay();
+		});
+
+		const btnMute = doc.getElementById('btn-mute') as UIKit.Text | undefined;
+		btnMute?.addEventListener('click', () => {
+			const muted = this.game.audio.toggleMute();
+			btnMute.setProperties({
+				text: muted ? 'Unmute' : 'Mute',
+				backgroundColor: muted ? '#ff2266' : '#222244',
+			});
+		});
+
+		this.updateSettingsSkins();
+		this.updateVolumeDisplay();
+	}
+
+	private updateSettingsSkins() {
+		if (!this.settingsDoc) return;
+		const currentSkin = this.game.getSkin();
+		const skinColors: Record<string, string> = {
+			[SnakeSkin.NeonGreen]: '#00ff88',
+			[SnakeSkin.CyberBlue]: '#00aaff',
+			[SnakeSkin.FireRed]: '#ff4422',
+			[SnakeSkin.GoldRush]: '#ffcc00',
+			[SnakeSkin.Ultraviolet]: '#cc44ff',
+		};
+
+		for (let i = 0; i < SNAKE_SKIN_DEFS.length; i++) {
+			const btn = this.settingsDoc.getElementById(`btn-skin-${i}`) as UIKit.Text | undefined;
+			if (!btn) continue;
+			const active = SNAKE_SKIN_DEFS[i].id === currentSkin;
+			const color = skinColors[SNAKE_SKIN_DEFS[i].id] || '#00ff88';
+			btn.setProperties({
+				backgroundColor: active ? color : '#222244',
+				color: active ? '#000000' : '#aaaacc',
+			});
+		}
+	}
+
+	private updateVolumeDisplay() {
+		if (!this.settingsDoc) return;
+		setText(this.settingsDoc, 'vol-display', `${this.volume}%`);
+	}
+
 	private updateStatsPanel() {
 		if (!this.statsDoc) return;
 		const s = this.game.statsTracker.getStats();
@@ -288,6 +380,8 @@ export class UISystem extends createSystem({
 		setText(this.statsDoc, 'stat-classic', String(s.classicBest));
 		setText(this.statsDoc, 'stat-speed', String(s.speedBest));
 		setText(this.statsDoc, 'stat-maze', String(s.mazeBest));
+		setText(this.statsDoc, 'stat-wrap', String(s.wrapBest));
+		setText(this.statsDoc, 'stat-daily', String(s.dailyBest));
 	}
 
 	private updateLeaderboard() {
@@ -382,6 +476,7 @@ export class UISystem extends createSystem({
 			{ id: 'btn-speed', mode: GameMode.Speed },
 			{ id: 'btn-maze', mode: GameMode.Maze },
 			{ id: 'btn-wrap', mode: GameMode.Wrap },
+			{ id: 'btn-daily', mode: GameMode.Daily },
 		];
 		for (const { id, mode } of modes) {
 			const btn = this.menuDoc.getElementById(id) as UIKit.Text | undefined;
@@ -418,7 +513,7 @@ export class UISystem extends createSystem({
 		if (!this.game) return;
 		const state = this.game.getState();
 
-		const showMenu = state === GameState.Menu && !this.showingAchievements && !this.showingStats && !this.showingLeaderboard;
+		const showMenu = state === GameState.Menu && !this.showingAchievements && !this.showingStats && !this.showingLeaderboard && !this.showingSettings;
 		this.setPanelVisible(this.hudEntity, state === GameState.Playing);
 		this.setPanelVisible(this.menuEntity, showMenu);
 		this.setPanelVisible(this.gameoverEntity, state === GameState.GameOver);
@@ -426,6 +521,7 @@ export class UISystem extends createSystem({
 		this.setPanelVisible(this.achvEntity, this.showingAchievements && state === GameState.Menu);
 		this.setPanelVisible(this.statsEntity, this.showingStats && state === GameState.Menu);
 		this.setPanelVisible(this.lbEntity, this.showingLeaderboard && state === GameState.Menu);
+		this.setPanelVisible(this.settingsEntity, this.showingSettings && state === GameState.Menu);
 
 		// Toast handling
 		if (this.toastTimer > 0) {
@@ -445,6 +541,18 @@ export class UISystem extends createSystem({
 			setText(this.hudDoc, 'score-val', String(this.game.getScore()));
 			setText(this.hudDoc, 'length-val', String(this.game.getSnakeLength()));
 			setText(this.hudDoc, 'high-val', String(this.game.getHighScore()));
+			setText(this.hudDoc, 'level-val', String(this.game.getLevel()));
+
+			// Show status row if there's combo or active power-ups
+			const combo = this.game.getComboCount();
+			const powerLabels = this.game.getActivePowerUpLabels();
+			const hasStatus = combo > 1 || powerLabels.length > 0;
+			setVisible(this.hudDoc, 'status-row', hasStatus);
+
+			if (hasStatus) {
+				setText(this.hudDoc, 'combo-val', combo > 1 ? `${combo}x COMBO` : '');
+				setText(this.hudDoc, 'powerup-val', powerLabels.length > 0 ? powerLabels.join(' ') : '');
+			}
 		}
 
 		// Update game over panel

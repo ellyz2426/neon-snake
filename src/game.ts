@@ -14,11 +14,15 @@ import {
 	GameState,
 	GameMode,
 	Difficulty,
+	SnakeSkin,
 	DIFFICULTY_SPEEDS,
 	GRID_SIZE,
 	CELL_SIZE,
+	SNAKE_SKIN_DEFS,
+	SeededRNG,
 	type GridPos,
 	type GameConfig,
+	type SnakeSkinDef,
 } from './types';
 import { gridToWorld } from './arena';
 import { AudioManager } from './audio';
@@ -29,9 +33,8 @@ import { PowerUpManager, PowerUpType } from './powerups';
 import { TrailSystem } from './trail';
 import { LeaderboardManager } from './leaderboard';
 
-// Maze layouts: arrays of obstacle positions
+// Maze layouts
 const MAZE_LAYOUTS: GridPos[][] = [
-	// Layout 1: cross pattern
 	...(() => {
 		const obs: GridPos[] = [];
 		const mid = Math.floor(GRID_SIZE / 2);
@@ -43,7 +46,6 @@ const MAZE_LAYOUTS: GridPos[][] = [
 		}
 		return [obs];
 	})(),
-	// Layout 2: four blocks
 	...(() => {
 		const obs: GridPos[] = [];
 		const q1 = Math.floor(GRID_SIZE / 4);
@@ -59,7 +61,6 @@ const MAZE_LAYOUTS: GridPos[][] = [
 		}
 		return [obs];
 	})(),
-	// Layout 3: diamond ring
 	...(() => {
 		const obs: GridPos[] = [];
 		const mid = Math.floor(GRID_SIZE / 2);
@@ -75,7 +76,6 @@ const MAZE_LAYOUTS: GridPos[][] = [
 		}
 		return [obs];
 	})(),
-	// Layout 4: corridors
 	...(() => {
 		const obs: GridPos[] = [];
 		for (let x = 3; x < GRID_SIZE - 3; x++) {
@@ -89,18 +89,16 @@ const MAZE_LAYOUTS: GridPos[][] = [
 		}
 		return [obs];
 	})(),
-	// Layout 5: spiral
 	...(() => {
 		const obs: GridPos[] = [];
-		for (let x = 3; x <= 12; x++) { obs.push({ x, z: 3 }); }
-		for (let z = 3; z <= 10; z++) { obs.push({ x: 12, z }); }
-		for (let x = 5; x <= 12; x++) { obs.push({ x, z: 10 }); }
-		for (let z = 5; z <= 10; z++) { obs.push({ x: 5, z }); }
-		for (let x = 7; x <= 10; x++) { obs.push({ x, z: 5 }); }
-		for (let z = 5; z <= 8; z++) { obs.push({ x: 10, z }); }
+		for (let x = 3; x <= 12; x++) obs.push({ x, z: 3 });
+		for (let z = 3; z <= 10; z++) obs.push({ x: 12, z });
+		for (let x = 5; x <= 12; x++) obs.push({ x, z: 10 });
+		for (let z = 5; z <= 10; z++) obs.push({ x: 5, z });
+		for (let x = 7; x <= 10; x++) obs.push({ x, z: 5 });
+		for (let z = 5; z <= 8; z++) obs.push({ x: 10, z });
 		return [obs];
 	})(),
-	// Layout 6: checkered walls
 	...(() => {
 		const obs: GridPos[] = [];
 		for (let x = 2; x < GRID_SIZE - 2; x += 4) {
@@ -112,9 +110,31 @@ const MAZE_LAYOUTS: GridPos[][] = [
 		}
 		return [obs];
 	})(),
+	// Layout 7: zigzag
+	...(() => {
+		const obs: GridPos[] = [];
+		for (let z = 2; z < GRID_SIZE - 2; z += 3) {
+			const startX = z % 6 < 3 ? 2 : GRID_SIZE - 6;
+			for (let x = startX; x < startX + 4; x++) {
+				obs.push({ x, z });
+			}
+		}
+		return [obs];
+	})(),
+	// Layout 8: frame
+	...(() => {
+		const obs: GridPos[] = [];
+		for (let i = 4; i <= 11; i++) {
+			obs.push({ x: 4, z: i });
+			obs.push({ x: 11, z: i });
+			obs.push({ x: i, z: 4 });
+			obs.push({ x: i, z: 11 });
+		}
+		// Remove midpoints for passages
+		return [obs.filter(o => !(o.x === 4 && o.z === 8) && !(o.x === 11 && o.z === 8) && !(o.x === 8 && o.z === 4) && !(o.x === 8 && o.z === 11))];
+	})(),
 ];
 
-const SNAKE_COLORS = [0x00ff88, 0x00ffaa, 0x22ffcc];
 const FOOD_COLORS = [0xff2266, 0xff4488, 0xffaa00, 0x00ccff, 0xaa44ff];
 
 export class GameManager {
@@ -142,6 +162,7 @@ export class GameManager {
 		gridSize: GRID_SIZE,
 		mode: GameMode.Classic,
 		difficulty: Difficulty.Normal,
+		skin: SnakeSkin.NeonGreen,
 	};
 
 	private snakeMeshes: Mesh[] = [];
@@ -157,6 +178,7 @@ export class GameManager {
 	private deathByWall = false;
 	private deathBySelf = false;
 	private deathByObstacle = false;
+	private powerUpsCollectedThisGame = 0;
 
 	// Subsystems
 	readonly audio: AudioManager;
@@ -178,13 +200,21 @@ export class GameManager {
 	private shakeDecay = 8;
 	private originalCamPos: Vector3 | null = null;
 
-	// Callbacks for UI updates
+	// Daily challenge
+	private dailyBestScore = 0;
+	private dailyDate = '';
+
+	// Active skin
+	private currentSkinDef: SnakeSkinDef = SNAKE_SKIN_DEFS[0];
+
+	// Callbacks
 	onScoreChange?: (score: number, highScore: number, length: number) => void;
 	onStateChange?: (state: GameState, score?: number) => void;
 	onCombo?: (count: number) => void;
 	onAchievement?: (title: string, desc: string) => void;
 	onPowerUp?: (label: string) => void;
 	onLevelUp?: (level: number) => void;
+	onPowerUpActive?: (types: string[]) => void;
 
 	constructor(world: World, arenaGroup: Group) {
 		this.world = world;
@@ -205,10 +235,10 @@ export class GameManager {
 		this.trail = new TrailSystem(arenaGroup);
 		this.leaderboard = new LeaderboardManager();
 
-		// Wire power-up callbacks
 		this.powerUps.onCollect = (type, label) => {
 			this.audio.playPowerUp();
 			this.onPowerUp?.(label);
+			this.powerUpsCollectedThisGame++;
 
 			if (type === PowerUpType.Shrink && this.snake.length > 3) {
 				const removeCount = Math.min(3, this.snake.length - 3);
@@ -223,15 +253,27 @@ export class GameManager {
 			this.audio.playMenuSelect();
 		};
 
-		// Init audio on first interaction
 		const initAudio = () => this.audio.init();
 		document.addEventListener('click', initAudio, { once: true });
 		document.addEventListener('touchstart', initAudio, { once: true });
 
-		// Load high score
 		try {
 			const saved = localStorage.getItem('neon-snake-highscore');
 			if (saved) this.highScore = parseInt(saved, 10) || 0;
+			const dailyRaw = localStorage.getItem('neon-snake-daily');
+			if (dailyRaw) {
+				const dd = JSON.parse(dailyRaw);
+				this.dailyBestScore = dd.score || 0;
+				this.dailyDate = dd.date || '';
+			}
+			const skinRaw = localStorage.getItem('neon-snake-skin');
+			if (skinRaw) {
+				const skinDef = SNAKE_SKIN_DEFS.find(s => s.id === skinRaw);
+				if (skinDef) {
+					this.currentSkinDef = skinDef;
+					this.config.skin = skinDef.id;
+				}
+			}
 		} catch {}
 
 		this.originalCamPos = world.camera.position.clone();
@@ -245,9 +287,35 @@ export class GameManager {
 	getDifficulty(): Difficulty { return this.config.difficulty; }
 	getGamesPlayed(): number { return this.gamesPlayed; }
 	getLevel(): number { return this.level; }
+	getSkin(): SnakeSkin { return this.config.skin; }
+	getDailyBestScore(): number { return this.dailyBestScore; }
+	getComboCount(): number { return this.comboCount; }
+	getActivePowerUpLabels(): string[] {
+		return this.powerUps.getActiveTypes().map(t => {
+			switch (t) {
+				case PowerUpType.SpeedBoost: return 'SPD';
+				case PowerUpType.Invincibility: return 'INV';
+				case PowerUpType.ScoreMultiplier: return '2X';
+				case PowerUpType.SlowMotion: return 'SLO';
+				default: return '';
+			}
+		}).filter(Boolean);
+	}
 
 	setMode(mode: GameMode) { this.config.mode = mode; }
 	setDifficulty(diff: Difficulty) { this.config.difficulty = diff; }
+
+	setSkin(skin: SnakeSkin) {
+		const def = SNAKE_SKIN_DEFS.find(s => s.id === skin);
+		if (!def) return;
+		this.config.skin = skin;
+		this.currentSkinDef = def;
+		this.trail.setColor(def.trailColor);
+		try { localStorage.setItem('neon-snake-skin', skin); } catch {}
+		if (this.state === GameState.Playing) {
+			this.rebuildSnake();
+		}
+	}
 
 	startGame() {
 		this.score = 0;
@@ -263,6 +331,7 @@ export class GameManager {
 		this.turnCount = 0;
 		this.level = 1;
 		this.foodSinceLevel = 0;
+		this.powerUpsCollectedThisGame = 0;
 		this.moveInterval = DIFFICULTY_SPEEDS[this.config.difficulty];
 
 		const mid = Math.floor(GRID_SIZE / 2);
@@ -278,6 +347,24 @@ export class GameManager {
 		if (this.config.mode === GameMode.Maze) {
 			const layoutIdx = Math.floor(Math.random() * MAZE_LAYOUTS.length);
 			this.obstacles = [...MAZE_LAYOUTS[layoutIdx]];
+		} else if (this.config.mode === GameMode.Daily) {
+			// Seeded maze for today
+			const rng = SeededRNG.fromDate();
+			const layoutIdx = rng.nextInt(MAZE_LAYOUTS.length);
+			this.obstacles = [...MAZE_LAYOUTS[layoutIdx]];
+			// Add some extra random obstacles
+			const extraCount = 3 + rng.nextInt(5);
+			for (let i = 0; i < extraCount; i++) {
+				const ox = 2 + rng.nextInt(GRID_SIZE - 4);
+				const oz = 2 + rng.nextInt(GRID_SIZE - 4);
+				const isSnake = this.snake.some(s => s.x === ox && s.z === oz);
+				const isObs = this.obstacles.some(o => o.x === ox && o.z === oz);
+				if (!isSnake && !isObs) {
+					this.obstacles.push({ x: ox, z: oz });
+				}
+			}
+			// Daily uses Normal difficulty always
+			this.moveInterval = DIFFICULTY_SPEEDS[Difficulty.Normal];
 		}
 
 		this.clearVisuals();
@@ -286,6 +373,7 @@ export class GameManager {
 		this.rebuildSnake();
 		this.powerUps.clearAll();
 		this.trail.clearAll();
+		this.trail.setColor(this.currentSkinDef.trailColor);
 
 		this.state = GameState.Playing;
 		this.gamesPlayed++;
@@ -369,6 +457,10 @@ export class GameManager {
 		this.sessionTime += delta;
 		this.powerUps.update(delta);
 
+		// Notify active power-ups for HUD
+		const activeLabels = this.getActivePowerUpLabels();
+		this.onPowerUpActive?.(activeLabels);
+
 		if (this.powerUps.shouldSpawn()) {
 			const pos = this.findFreeCell();
 			if (pos) this.powerUps.spawn(pos);
@@ -419,7 +511,8 @@ export class GameManager {
 			case Direction.Right: head.x++; break;
 		}
 
-		if (this.config.mode === GameMode.Wrap) {
+		const wrapMode = this.config.mode === GameMode.Wrap;
+		if (wrapMode) {
 			if (head.x < 0) head.x = GRID_SIZE - 1;
 			else if (head.x >= GRID_SIZE) head.x = 0;
 			if (head.z < 0) head.z = GRID_SIZE - 1;
@@ -493,7 +586,7 @@ export class GameManager {
 		this.audio.playEat(this.comboCount);
 
 		const foodPos = gridToWorld(this.food.x, this.food.z);
-		this.particles.spawnEatEffect(foodPos, 0x00ff88);
+		this.particles.spawnEatEffect(foodPos, this.currentSkinDef.headColor);
 
 		if (this.comboCount > 1) {
 			this.onCombo?.(this.comboCount);
@@ -520,6 +613,22 @@ export class GameManager {
 			this.particles.spawnDeathEffect(headPos);
 		}
 
+		// Daily best score tracking
+		if (this.config.mode === GameMode.Daily) {
+			const today = new Date().toISOString().slice(0, 10);
+			if (this.score > this.dailyBestScore || this.dailyDate !== today) {
+				if (this.dailyDate !== today) {
+					this.dailyBestScore = this.score;
+					this.dailyDate = today;
+				} else {
+					this.dailyBestScore = Math.max(this.dailyBestScore, this.score);
+				}
+				try {
+					localStorage.setItem('neon-snake-daily', JSON.stringify({ score: this.dailyBestScore, date: this.dailyDate }));
+				} catch {}
+			}
+		}
+
 		const stats: GameStats = {
 			score: this.score,
 			highScore: this.highScore,
@@ -537,6 +646,9 @@ export class GameManager {
 			speedModeMaxSpeed: 0,
 			mazeCompleted: false,
 			timePlayed: this.achievements.getTotalTime(),
+			level: this.level,
+			powerUpsCollected: this.powerUpsCollectedThisGame,
+			dailyChallengeScore: this.config.mode === GameMode.Daily ? this.score : 0,
 		};
 
 		const newAchs = this.achievements.check(stats);
@@ -614,7 +726,8 @@ export class GameManager {
 		const segSize = CELL_SIZE * 0.85;
 		const headSize = CELL_SIZE * 0.9;
 
-		let headColor = SNAKE_COLORS[0];
+		const skin = this.currentSkinDef;
+		let headColor = skin.headColor;
 		if (this.powerUps.isActive(PowerUpType.Invincibility)) {
 			headColor = 0x00ffff;
 		} else if (this.powerUps.isActive(PowerUpType.SpeedBoost)) {
@@ -637,8 +750,8 @@ export class GameManager {
 				}
 			} else {
 				const t = i / Math.max(this.snake.length - 1, 1);
-				const colorIdx = Math.floor(t * (SNAKE_COLORS.length - 1));
-				const baseColor = isHead ? headColor : SNAKE_COLORS[Math.min(colorIdx, SNAKE_COLORS.length - 1)];
+				const colorIdx = Math.floor(t * (skin.bodyColors.length - 1));
+				const baseColor = isHead ? headColor : skin.bodyColors[Math.min(colorIdx, skin.bodyColors.length - 1)];
 
 				const mat = new MeshStandardMaterial({
 					color: baseColor,
@@ -728,6 +841,9 @@ export class GameManager {
 			const wave = Math.sin(this.animTime * 3 + i * 0.5) * 0.15;
 			if (i === 0) {
 				mat.emissiveIntensity = 1.2 + wave;
+				// Head bobbing
+				const bob = Math.sin(this.animTime * 5) * 0.003;
+				mesh.position.y += bob;
 			} else {
 				const t = i / Math.max(this.snakeMeshes.length - 1, 1);
 				mat.emissiveIntensity = 0.7 - t * 0.2 + wave;
