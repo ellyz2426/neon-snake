@@ -11,7 +11,6 @@ import type { GameManager } from './game';
 import { GameState, GameMode, Difficulty } from './types';
 import type { Achievement } from './achievements';
 
-// Helper to safely get doc and set text
 function setText(doc: UIKitDocument | undefined, id: string, text: string) {
 	if (!doc) return;
 	const el = doc.getElementById(id) as UIKit.Text | undefined;
@@ -53,6 +52,10 @@ export class UISystem extends createSystem({
 		required: [PanelUI, PanelDocument],
 		where: [eq(PanelUI, 'config', './ui/stats.json')],
 	},
+	lb: {
+		required: [PanelUI, PanelDocument],
+		where: [eq(PanelUI, 'config', './ui/lboard.json')],
+	},
 }) {
 	private game!: GameManager;
 	private hudDoc: UIKitDocument | null = null;
@@ -62,8 +65,8 @@ export class UISystem extends createSystem({
 	private achvDoc: UIKitDocument | null = null;
 	private toastDoc: UIKitDocument | null = null;
 	private statsDoc: UIKitDocument | null = null;
+	private lbDoc: UIKitDocument | null = null;
 
-	// Panel entities for show/hide
 	private hudEntity: Entity | null = null;
 	private menuEntity: Entity | null = null;
 	private gameoverEntity: Entity | null = null;
@@ -71,11 +74,13 @@ export class UISystem extends createSystem({
 	private achvEntity: Entity | null = null;
 	private toastEntity: Entity | null = null;
 	private statsEntity: Entity | null = null;
+	private lbEntity: Entity | null = null;
 
 	private selectedMode: GameMode = GameMode.Classic;
 	private selectedDifficulty: Difficulty = Difficulty.Normal;
 	private showingAchievements = false;
 	private showingStats = false;
+	private showingLeaderboard = false;
 	private achvPage = 0;
 	private toastTimer = 0;
 	private toastQueue: { title: string; desc: string }[] = [];
@@ -84,6 +89,12 @@ export class UISystem extends createSystem({
 		this.game = refs.game;
 		this.game.onAchievement = (title: string, desc: string) => {
 			this.toastQueue.push({ title, desc });
+		};
+		this.game.onPowerUp = (label: string) => {
+			this.toastQueue.push({ title: 'POWER UP', desc: label });
+		};
+		this.game.onLevelUp = (level: number) => {
+			this.toastQueue.push({ title: 'LEVEL UP', desc: `Level ${level}` });
 		};
 	}
 
@@ -142,8 +153,13 @@ export class UISystem extends createSystem({
 			this.wireStats(doc);
 		});
 
-		// Wire achievement callback
-		this.game?.onAchievement && undefined; // placeholder - set in setRefs
+		this.queries.lb.subscribe('qualify', (entity) => {
+			const doc = PanelDocument.data.document[entity.index] as UIKitDocument;
+			if (!doc) return;
+			this.lbDoc = doc;
+			this.lbEntity = entity;
+			this.wireLeaderboard(doc);
+		});
 	}
 
 	private wireMenu(doc: UIKitDocument) {
@@ -154,27 +170,36 @@ export class UISystem extends createSystem({
 			this.game.startGame();
 		});
 
-		// Achievements button
 		const btnAchv = doc.getElementById('btn-achievements') as UIKit.Text | undefined;
 		btnAchv?.addEventListener('click', () => {
 			this.showingAchievements = true;
 			this.showingStats = false;
+			this.showingLeaderboard = false;
 			this.achvPage = 0;
 			this.updateAchievementsList();
 		});
 
-		// Stats button
 		const btnStats = doc.getElementById('btn-stats') as UIKit.Text | undefined;
 		btnStats?.addEventListener('click', () => {
 			this.showingStats = true;
 			this.showingAchievements = false;
+			this.showingLeaderboard = false;
 			this.updateStatsPanel();
+		});
+
+		const btnLb = doc.getElementById('btn-leaderboard') as UIKit.Text | undefined;
+		btnLb?.addEventListener('click', () => {
+			this.showingLeaderboard = true;
+			this.showingAchievements = false;
+			this.showingStats = false;
+			this.updateLeaderboard();
 		});
 
 		// Mode buttons
 		const btnClassic = doc.getElementById('btn-classic') as UIKit.Text | undefined;
 		const btnSpeed = doc.getElementById('btn-speed') as UIKit.Text | undefined;
 		const btnMaze = doc.getElementById('btn-maze') as UIKit.Text | undefined;
+		const btnWrap = doc.getElementById('btn-wrap') as UIKit.Text | undefined;
 
 		btnClassic?.addEventListener('click', () => {
 			this.selectedMode = GameMode.Classic;
@@ -186,6 +211,10 @@ export class UISystem extends createSystem({
 		});
 		btnMaze?.addEventListener('click', () => {
 			this.selectedMode = GameMode.Maze;
+			this.updateModeButtons();
+		});
+		btnWrap?.addEventListener('click', () => {
+			this.selectedMode = GameMode.Wrap;
 			this.updateModeButtons();
 		});
 
@@ -242,6 +271,13 @@ export class UISystem extends createSystem({
 		});
 	}
 
+	private wireLeaderboard(doc: UIKitDocument) {
+		const btnClose = doc.getElementById('btn-lb-close') as UIKit.Text | undefined;
+		btnClose?.addEventListener('click', () => {
+			this.showingLeaderboard = false;
+		});
+	}
+
 	private updateStatsPanel() {
 		if (!this.statsDoc) return;
 		const s = this.game.statsTracker.getStats();
@@ -252,6 +288,26 @@ export class UISystem extends createSystem({
 		setText(this.statsDoc, 'stat-classic', String(s.classicBest));
 		setText(this.statsDoc, 'stat-speed', String(s.speedBest));
 		setText(this.statsDoc, 'stat-maze', String(s.mazeBest));
+	}
+
+	private updateLeaderboard() {
+		if (!this.lbDoc) return;
+		const entries = this.game.leaderboard.getTop(10);
+
+		for (let i = 0; i < 10; i++) {
+			const rowEl = this.lbDoc.getElementById(`lb-row-${i}`) as UIKit.Container | undefined;
+			if (!rowEl) continue;
+
+			if (i < entries.length) {
+				const e = entries[i];
+				rowEl.setProperties({ display: 'flex' });
+				setText(this.lbDoc, `lb-score-${i}`, String(e.score));
+				setText(this.lbDoc, `lb-mode-${i}`, e.mode.charAt(0).toUpperCase() + e.mode.slice(1));
+				setText(this.lbDoc, `lb-len-${i}`, `L:${e.length}`);
+			} else {
+				rowEl.setProperties({ display: 'none' });
+			}
+		}
 	}
 
 	private wireAchievements(doc: UIKitDocument) {
@@ -325,6 +381,7 @@ export class UISystem extends createSystem({
 			{ id: 'btn-classic', mode: GameMode.Classic },
 			{ id: 'btn-speed', mode: GameMode.Speed },
 			{ id: 'btn-maze', mode: GameMode.Maze },
+			{ id: 'btn-wrap', mode: GameMode.Wrap },
 		];
 		for (const { id, mode } of modes) {
 			const btn = this.menuDoc.getElementById(id) as UIKit.Text | undefined;
@@ -361,21 +418,20 @@ export class UISystem extends createSystem({
 		if (!this.game) return;
 		const state = this.game.getState();
 
-		// Update panel visibility
-		const showMenu = state === GameState.Menu && !this.showingAchievements && !this.showingStats;
+		const showMenu = state === GameState.Menu && !this.showingAchievements && !this.showingStats && !this.showingLeaderboard;
 		this.setPanelVisible(this.hudEntity, state === GameState.Playing);
 		this.setPanelVisible(this.menuEntity, showMenu);
 		this.setPanelVisible(this.gameoverEntity, state === GameState.GameOver);
 		this.setPanelVisible(this.pauseEntity, state === GameState.Paused);
 		this.setPanelVisible(this.achvEntity, this.showingAchievements && state === GameState.Menu);
 		this.setPanelVisible(this.statsEntity, this.showingStats && state === GameState.Menu);
+		this.setPanelVisible(this.lbEntity, this.showingLeaderboard && state === GameState.Menu);
 
 		// Toast handling
 		if (this.toastTimer > 0) {
 			this.toastTimer -= delta;
 			if (this.toastTimer <= 0) {
 				this.setPanelVisible(this.toastEntity, false);
-				// Show next toast if queued
 				if (this.toastQueue.length > 0) {
 					this.showNextToast();
 				}

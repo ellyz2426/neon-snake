@@ -1,0 +1,91 @@
+<container
+  name="lb-root"
+  flexDirection="column"
+  alignItems="center"
+  justifyContent="flex-start"
+  width="100%"
+  height="100%"
+  padding="14"
+  backgroundColor="#080822e0"
+  borderRadius="12"
+  borderColor="#ff44aa"
+  borderWidth="2"
+  gap="6"
+>
+  <text fontSize="20" color="#ff44aa" fontWeight="bold">LEADERBOARD</text>
+  <text name="lb-subtitle" fontSize="10" color="#8888aa">Top 10 Scores</text>
+
+  <container name="lb-row-0" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#1a1a44" borderRadius="3" gap="6">
+    <text name="lb-rank-0" fontSize="11" color="#ffaa00" fontWeight="bold" width="20">1</text>
+    <text name="lb-score-0" fontSize="11" color="#ffffff" width="60">---</text>
+    <text name="lb-mode-0" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-0" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-1" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6">
+    <text name="lb-rank-1" fontSize="11" color="#cccccc" fontWeight="bold" width="20">2</text>
+    <text name="lb-score-1" fontSize="11" color="#ffffff" width="60">---</text>
+    <text name="lb-mode-1" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-1" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-2" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6">
+    <text name="lb-rank-2" fontSize="11" color="#cc8844" fontWeight="bold" width="20">3</text>
+    <text name="lb-score-2" fontSize="11" color="#ffffff" width="60">---</text>
+    <text name="lb-mode-2" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-2" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-3" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6">
+    <text name="lb-rank-3" fontSize="11" color="#888888" fontWeight="bold" width="20">4</text>
+    <text name="lb-score-3" fontSize="11" color="#ccccdd" width="60">---</text>
+    <text name="lb-mode-3" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-3" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-4" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6">
+    <text name="lb-rank-4" fontSize="11" color="#888888" fontWeight="bold" width="20">5</text>
+    <text name="lb-score-4" fontSize="11" color="#ccccdd" width="60">---</text>
+    <text name="lb-mode-4" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-4" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-5" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6" display="none">
+    <text name="lb-rank-5" fontSize="11" color="#888888" fontWeight="bold" width="20">6</text>
+    <text name="lb-score-5" fontSize="11" color="#ccccdd" width="60">---</text>
+    <text name="lb-mode-5" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-5" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-6" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6" display="none">
+    <text name="lb-rank-6" fontSize="11" color="#888888" fontWeight="bold" width="20">7</text>
+    <text name="lb-score-6" fontSize="11" color="#ccccdd" width="60">---</text>
+    <text name="lb-mode-6" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-6" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-7" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6" display="none">
+    <text name="lb-rank-7" fontSize="11" color="#888888" fontWeight="bold" width="20">8</text>
+    <text name="lb-score-7" fontSize="11" color="#ccccdd" width="60">---</text>
+    <text name="lb-mode-7" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-7" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-8" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6" display="none">
+    <text name="lb-rank-8" fontSize="11" color="#888888" fontWeight="bold" width="20">9</text>
+    <text name="lb-score-8" fontSize="11" color="#ccccdd" width="60">---</text>
+    <text name="lb-mode-8" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-8" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+  <container name="lb-row-9" flexDirection="row" alignItems="center" width="90%" padding="4" backgroundColor="#111133" borderRadius="3" gap="6" display="none">
+    <text name="lb-rank-9" fontSize="11" color="#888888" fontWeight="bold" width="20">10</text>
+    <text name="lb-score-9" fontSize="11" color="#ccccdd" width="60">---</text>
+    <text name="lb-mode-9" fontSize="9" color="#6688aa" width="50">---</text>
+    <text name="lb-len-9" fontSize="9" color="#00ff88" width="40">---</text>
+  </container>
+
+  <text
+    name="btn-lb-close"
+    fontSize="10"
+    color="#aaaacc"
+    backgroundColor="#222244"
+    padding="5"
+    paddingLeft="14"
+    paddingRight="14"
+    borderRadius="4"
+    cursor="pointer"
+    marginTop="4"
+  >Close</text>
+</container>

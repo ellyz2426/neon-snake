@@ -23,6 +23,7 @@ export enum GameMode {
 	Classic = 'classic',
 	Speed = 'speed',
 	Maze = 'maze',
+	Wrap = 'wrap',
 }
 
 export enum Difficulty {

@@ -88,6 +88,12 @@ function createPanels(world: World): void {
 	statsEntity.object3D!.position.set(0, 1.35, -1.2);
 	statsEntity.addComponent(PanelUI, { config: './ui/stats.json', maxWidth: 450, maxHeight: 600 });
 	statsEntity.object3D!.visible = false;
+
+	// Leaderboard panel
+	const lbEntity = world.createTransformEntity();
+	lbEntity.object3D!.position.set(0, 1.35, -1.2);
+	lbEntity.addComponent(PanelUI, { config: './ui/lboard.json', maxWidth: 450, maxHeight: 700 });
+	lbEntity.object3D!.visible = false;
 }
 
 main().catch(console.error);

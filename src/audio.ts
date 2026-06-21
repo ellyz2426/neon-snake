@@ -97,4 +97,19 @@ export class AudioManager {
 		this.playTone(freq, 0.1, 'square', 0.2);
 		setTimeout(() => this.playTone(freq * 1.25, 0.15, 'square', 0.25), 60);
 	}
+
+	playPowerUp() {
+		if (!this.ctx) this.init();
+		this.playTone(880, 0.08, 'sine', 0.25);
+		setTimeout(() => this.playTone(1100, 0.08, 'sine', 0.25), 60);
+		setTimeout(() => this.playTone(1320, 0.12, 'sine', 0.3), 120);
+	}
+
+	playLevelUp() {
+		if (!this.ctx) this.init();
+		const notes = [440, 550, 660, 880, 1100];
+		notes.forEach((f, i) => {
+			setTimeout(() => this.playTone(f, 0.12, 'triangle', 0.2), i * 80);
+		});
+	}
 }

@@ -48,6 +48,16 @@
         cursor="pointer"
         fontWeight="bold"
       >Maze</text>
+      <text
+        name="btn-wrap"
+        fontSize="11"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="6"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Wrap</text>
     </container>
   </container>
 
@@ -131,4 +141,18 @@
     borderWidth="1"
     cursor="pointer"
   >Statistics</text>
+
+  <text
+    name="btn-leaderboard"
+    fontSize="10"
+    color="#ff44aa"
+    backgroundColor="#1a1a33"
+    padding="5"
+    paddingLeft="14"
+    paddingRight="14"
+    borderRadius="4"
+    borderColor="#ff44aa66"
+    borderWidth="1"
+    cursor="pointer"
+  >Leaderboard</text>
 </container>

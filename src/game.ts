@@ -25,6 +25,9 @@ import { AudioManager } from './audio';
 import { AchievementManager, type GameStats } from './achievements';
 import { ParticleSystem } from './particles';
 import { StatsTracker } from './stats';
+import { PowerUpManager, PowerUpType } from './powerups';
+import { TrailSystem } from './trail';
+import { LeaderboardManager } from './leaderboard';
 
 // Maze layouts: arrays of obstacle positions
 const MAZE_LAYOUTS: GridPos[][] = [
@@ -52,6 +55,59 @@ const MAZE_LAYOUTS: GridPos[][] = [
 						obs.push({ x: bx + dx, z: bz + dz });
 					}
 				}
+			}
+		}
+		return [obs];
+	})(),
+	// Layout 3: diamond ring
+	...(() => {
+		const obs: GridPos[] = [];
+		const mid = Math.floor(GRID_SIZE / 2);
+		const r = 5;
+		for (let x = 0; x < GRID_SIZE; x++) {
+			for (let z = 0; z < GRID_SIZE; z++) {
+				const d = Math.abs(x - mid) + Math.abs(z - mid);
+				if (d === r || d === r + 1) {
+					if (x === mid || z === mid) continue;
+					obs.push({ x, z });
+				}
+			}
+		}
+		return [obs];
+	})(),
+	// Layout 4: corridors
+	...(() => {
+		const obs: GridPos[] = [];
+		for (let x = 3; x < GRID_SIZE - 3; x++) {
+			if (x % 4 === 3) {
+				for (let z = 2; z < GRID_SIZE - 2; z++) {
+					if (z < GRID_SIZE / 2 - 2 || z > GRID_SIZE / 2 + 1) {
+						obs.push({ x, z });
+					}
+				}
+			}
+		}
+		return [obs];
+	})(),
+	// Layout 5: spiral
+	...(() => {
+		const obs: GridPos[] = [];
+		for (let x = 3; x <= 12; x++) { obs.push({ x, z: 3 }); }
+		for (let z = 3; z <= 10; z++) { obs.push({ x: 12, z }); }
+		for (let x = 5; x <= 12; x++) { obs.push({ x, z: 10 }); }
+		for (let z = 5; z <= 10; z++) { obs.push({ x: 5, z }); }
+		for (let x = 7; x <= 10; x++) { obs.push({ x, z: 5 }); }
+		for (let z = 5; z <= 8; z++) { obs.push({ x: 10, z }); }
+		return [obs];
+	})(),
+	// Layout 6: checkered walls
+	...(() => {
+		const obs: GridPos[] = [];
+		for (let x = 2; x < GRID_SIZE - 2; x += 4) {
+			for (let z = 2; z < GRID_SIZE - 2; z += 4) {
+				obs.push({ x, z });
+				obs.push({ x: x + 1, z });
+				obs.push({ x, z: z + 1 });
 			}
 		}
 		return [obs];
@@ -107,15 +163,28 @@ export class GameManager {
 	readonly achievements: AchievementManager;
 	readonly particles: ParticleSystem;
 	readonly statsTracker: StatsTracker;
+	readonly powerUps: PowerUpManager;
+	readonly trail: TrailSystem;
+	readonly leaderboard: LeaderboardManager;
 
 	private moveCount = 0;
 	private turnCount = 0;
+	private level = 1;
+	private foodSinceLevel = 0;
+	private readonly foodPerLevel = 8;
+
+	// Screen shake
+	private shakeIntensity = 0;
+	private shakeDecay = 8;
+	private originalCamPos: Vector3 | null = null;
 
 	// Callbacks for UI updates
 	onScoreChange?: (score: number, highScore: number, length: number) => void;
 	onStateChange?: (state: GameState, score?: number) => void;
 	onCombo?: (count: number) => void;
 	onAchievement?: (title: string, desc: string) => void;
+	onPowerUp?: (label: string) => void;
+	onLevelUp?: (level: number) => void;
 
 	constructor(world: World, arenaGroup: Group) {
 		this.world = world;
@@ -132,6 +201,27 @@ export class GameManager {
 		this.achievements = new AchievementManager();
 		this.particles = new ParticleSystem(arenaGroup);
 		this.statsTracker = new StatsTracker();
+		this.powerUps = new PowerUpManager(arenaGroup);
+		this.trail = new TrailSystem(arenaGroup);
+		this.leaderboard = new LeaderboardManager();
+
+		// Wire power-up callbacks
+		this.powerUps.onCollect = (type, label) => {
+			this.audio.playPowerUp();
+			this.onPowerUp?.(label);
+
+			if (type === PowerUpType.Shrink && this.snake.length > 3) {
+				const removeCount = Math.min(3, this.snake.length - 3);
+				for (let i = 0; i < removeCount; i++) {
+					this.snake.pop();
+				}
+				this.rebuildSnake();
+			}
+		};
+
+		this.powerUps.onExpire = (_type) => {
+			this.audio.playMenuSelect();
+		};
 
 		// Init audio on first interaction
 		const initAudio = () => this.audio.init();
@@ -143,6 +233,8 @@ export class GameManager {
 			const saved = localStorage.getItem('neon-snake-highscore');
 			if (saved) this.highScore = parseInt(saved, 10) || 0;
 		} catch {}
+
+		this.originalCamPos = world.camera.position.clone();
 	}
 
 	getState(): GameState { return this.state; }
@@ -152,6 +244,7 @@ export class GameManager {
 	getMode(): GameMode { return this.config.mode; }
 	getDifficulty(): Difficulty { return this.config.difficulty; }
 	getGamesPlayed(): number { return this.gamesPlayed; }
+	getLevel(): number { return this.level; }
 
 	setMode(mode: GameMode) { this.config.mode = mode; }
 	setDifficulty(diff: Difficulty) { this.config.difficulty = diff; }
@@ -168,9 +261,10 @@ export class GameManager {
 		this.deathByObstacle = false;
 		this.moveCount = 0;
 		this.turnCount = 0;
+		this.level = 1;
+		this.foodSinceLevel = 0;
 		this.moveInterval = DIFFICULTY_SPEEDS[this.config.difficulty];
 
-		// Initialize snake at center
 		const mid = Math.floor(GRID_SIZE / 2);
 		this.snake = [
 			{ x: mid, z: mid },
@@ -180,7 +274,6 @@ export class GameManager {
 		this.direction = Direction.Up;
 		this.nextDirection = Direction.Up;
 
-		// Setup obstacles for maze mode
 		this.obstacles = [];
 		if (this.config.mode === GameMode.Maze) {
 			const layoutIdx = Math.floor(Math.random() * MAZE_LAYOUTS.length);
@@ -191,6 +284,8 @@ export class GameManager {
 		this.buildObstacles();
 		this.spawnFood();
 		this.rebuildSnake();
+		this.powerUps.clearAll();
+		this.trail.clearAll();
 
 		this.state = GameState.Playing;
 		this.gamesPlayed++;
@@ -200,7 +295,6 @@ export class GameManager {
 	}
 
 	setDirection(dir: Direction) {
-		// Prevent 180-degree turns
 		const opposite: Record<Direction, Direction> = {
 			[Direction.Up]: Direction.Down,
 			[Direction.Down]: Direction.Up,
@@ -237,6 +331,8 @@ export class GameManager {
 	returnToMenu() {
 		this.state = GameState.Menu;
 		this.clearVisuals();
+		this.powerUps.clearAll();
+		this.trail.clearAll();
 		this.onStateChange?.(this.state);
 	}
 
@@ -244,6 +340,26 @@ export class GameManager {
 		this.animTime += delta;
 		this.particles.update(delta);
 		this.achievements.updateTime(delta);
+		this.trail.update(delta);
+
+		// Screen shake
+		if (this.shakeIntensity > 0) {
+			this.shakeIntensity -= this.shakeDecay * delta;
+			if (this.shakeIntensity <= 0) {
+				this.shakeIntensity = 0;
+				if (this.originalCamPos) {
+					this.world.camera.position.copy(this.originalCamPos);
+				}
+			} else if (this.originalCamPos) {
+				const sx = (Math.random() - 0.5) * this.shakeIntensity * 0.02;
+				const sy = (Math.random() - 0.5) * this.shakeIntensity * 0.01;
+				this.world.camera.position.set(
+					this.originalCamPos.x + sx,
+					this.originalCamPos.y + sy,
+					this.originalCamPos.z,
+				);
+			}
+		}
 
 		if (this.state !== GameState.Playing) {
 			this.animateIdle(delta);
@@ -251,8 +367,13 @@ export class GameManager {
 		}
 
 		this.sessionTime += delta;
+		this.powerUps.update(delta);
 
-		// Combo timer
+		if (this.powerUps.shouldSpawn()) {
+			const pos = this.findFreeCell();
+			if (pos) this.powerUps.spawn(pos);
+		}
+
 		if (this.comboTimer > 0) {
 			this.comboTimer -= delta;
 			if (this.comboTimer <= 0) this.comboCount = 0;
@@ -260,10 +381,17 @@ export class GameManager {
 
 		this.moveTimer += delta;
 
-		// Speed mode: gradually increase speed
 		let interval = this.moveInterval;
 		if (this.config.mode === GameMode.Speed) {
 			interval = Math.max(0.06, this.moveInterval - this.score * 0.003);
+		}
+		interval = Math.max(0.06, interval - (this.level - 1) * 0.008);
+
+		if (this.powerUps.isActive(PowerUpType.SpeedBoost)) {
+			interval *= 0.6;
+		}
+		if (this.powerUps.isActive(PowerUpType.SlowMotion)) {
+			interval *= 1.6;
 		}
 
 		if (this.moveTimer >= interval) {
@@ -280,6 +408,10 @@ export class GameManager {
 		const head = { ...this.snake[0] };
 		this.moveCount++;
 
+		const tail = this.snake[this.snake.length - 1];
+		const tailWorld = gridToWorld(tail.x, tail.z);
+		this.trail.addSegment(tailWorld.x, tailWorld.z);
+
 		switch (this.direction) {
 			case Direction.Up: head.z--; break;
 			case Direction.Down: head.z++; break;
@@ -287,34 +419,46 @@ export class GameManager {
 			case Direction.Right: head.x++; break;
 		}
 
-		// Wall collision
-		if (head.x < 0 || head.x >= GRID_SIZE || head.z < 0 || head.z >= GRID_SIZE) {
-			this.deathByWall = true;
-			this.gameOver();
-			return;
-		}
-
-		// Self collision
-		for (const seg of this.snake) {
-			if (seg.x === head.x && seg.z === head.z) {
-				this.deathBySelf = true;
-				this.gameOver();
-				return;
+		if (this.config.mode === GameMode.Wrap) {
+			if (head.x < 0) head.x = GRID_SIZE - 1;
+			else if (head.x >= GRID_SIZE) head.x = 0;
+			if (head.z < 0) head.z = GRID_SIZE - 1;
+			else if (head.z >= GRID_SIZE) head.z = 0;
+		} else {
+			if (head.x < 0 || head.x >= GRID_SIZE || head.z < 0 || head.z >= GRID_SIZE) {
+				if (!this.powerUps.isActive(PowerUpType.Invincibility)) {
+					this.deathByWall = true;
+					this.gameOver();
+					return;
+				}
+				head.x = Math.max(0, Math.min(GRID_SIZE - 1, head.x));
+				head.z = Math.max(0, Math.min(GRID_SIZE - 1, head.z));
 			}
 		}
 
-		// Obstacle collision
-		for (const obs of this.obstacles) {
-			if (obs.x === head.x && obs.z === head.z) {
-				this.deathByObstacle = true;
-				this.gameOver();
-				return;
+		if (!this.powerUps.isActive(PowerUpType.Invincibility)) {
+			for (const seg of this.snake) {
+				if (seg.x === head.x && seg.z === head.z) {
+					this.deathBySelf = true;
+					this.gameOver();
+					return;
+				}
+			}
+		}
+
+		if (!this.powerUps.isActive(PowerUpType.Invincibility)) {
+			for (const obs of this.obstacles) {
+				if (obs.x === head.x && obs.z === head.z) {
+					this.deathByObstacle = true;
+					this.gameOver();
+					return;
+				}
 			}
 		}
 
 		this.snake.unshift(head);
+		this.powerUps.checkCollision(head);
 
-		// Food collision
 		if (head.x === this.food.x && head.z === this.food.z) {
 			this.eatFood();
 		} else {
@@ -325,19 +469,29 @@ export class GameManager {
 	}
 
 	private eatFood() {
-		// Combo system
 		this.comboCount++;
 		this.comboTimer = 3.0;
 		if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
 		const comboMultiplier = Math.min(this.comboCount, 5);
-		const points = 10 * comboMultiplier;
+		let points = 10 * comboMultiplier;
+
+		if (this.powerUps.isActive(PowerUpType.ScoreMultiplier)) {
+			points *= 2;
+		}
+
 		this.score += points;
 		this.totalFoodEaten++;
+		this.foodSinceLevel++;
 
-		// Audio
+		if (this.foodSinceLevel >= this.foodPerLevel) {
+			this.foodSinceLevel = 0;
+			this.level++;
+			this.onLevelUp?.(this.level);
+			this.audio.playLevelUp();
+		}
+
 		this.audio.playEat(this.comboCount);
 
-		// Particles at food location
 		const foodPos = gridToWorld(this.food.x, this.food.z);
 		this.particles.spawnEatEffect(foodPos, 0x00ff88);
 
@@ -359,14 +513,13 @@ export class GameManager {
 	private gameOver() {
 		this.state = GameState.GameOver;
 		this.audio.playDeath();
+		this.shakeIntensity = 1.0;
 
-		// Death particles at snake head
 		if (this.snake.length > 0) {
 			const headPos = gridToWorld(this.snake[0].x, this.snake[0].z);
 			this.particles.spawnDeathEffect(headPos);
 		}
 
-		// Check achievements
 		const stats: GameStats = {
 			score: this.score,
 			highScore: this.highScore,
@@ -392,7 +545,6 @@ export class GameManager {
 			this.onAchievement?.(ach.title, ach.description);
 		}
 
-		// Save stats
 		this.statsTracker.updateAfterGame(
 			this.score,
 			this.snake.length,
@@ -402,13 +554,25 @@ export class GameManager {
 			this.config.mode,
 		);
 
+		this.leaderboard.addScore(
+			this.score,
+			this.snake.length,
+			this.config.mode,
+			this.config.difficulty,
+		);
+
+		this.powerUps.clearAll();
+		this.trail.clearAll();
+
 		this.onStateChange?.(this.state, this.score);
 	}
 
-	private spawnFood() {
+	private findFreeCell(): GridPos | null {
 		const occupied = new Set<string>();
 		for (const s of this.snake) occupied.add(`${s.x},${s.z}`);
 		for (const o of this.obstacles) occupied.add(`${o.x},${o.z}`);
+		occupied.add(`${this.food.x},${this.food.z}`);
+		for (const p of this.powerUps.getSpawnedPositions()) occupied.add(`${p.x},${p.z}`);
 
 		const free: GridPos[] = [];
 		for (let x = 0; x < GRID_SIZE; x++) {
@@ -416,15 +580,18 @@ export class GameManager {
 				if (!occupied.has(`${x},${z}`)) free.push({ x, z });
 			}
 		}
+		if (free.length === 0) return null;
+		return free[Math.floor(Math.random() * free.length)];
+	}
 
-		if (free.length === 0) {
-			// Win condition — board is full
+	private spawnFood() {
+		const pos = this.findFreeCell();
+		if (!pos) {
 			this.state = GameState.GameOver;
 			this.onStateChange?.(this.state, this.score);
 			return;
 		}
-
-		this.food = free[Math.floor(Math.random() * free.length)];
+		this.food = pos;
 		this.buildFood();
 	}
 
@@ -439,7 +606,6 @@ export class GameManager {
 	}
 
 	private rebuildSnake() {
-		// Remove excess meshes
 		while (this.snakeMeshes.length > this.snake.length) {
 			const m = this.snakeMeshes.pop()!;
 			this.snakeGroup.remove(m);
@@ -448,19 +614,31 @@ export class GameManager {
 		const segSize = CELL_SIZE * 0.85;
 		const headSize = CELL_SIZE * 0.9;
 
+		let headColor = SNAKE_COLORS[0];
+		if (this.powerUps.isActive(PowerUpType.Invincibility)) {
+			headColor = 0x00ffff;
+		} else if (this.powerUps.isActive(PowerUpType.SpeedBoost)) {
+			headColor = 0xffaa00;
+		} else if (this.powerUps.isActive(PowerUpType.ScoreMultiplier)) {
+			headColor = 0xff00ff;
+		}
+
 		for (let i = 0; i < this.snake.length; i++) {
 			const pos = gridToWorld(this.snake[i].x, this.snake[i].z);
 			const isHead = i === 0;
 			const size = isHead ? headSize : segSize;
 
 			if (i < this.snakeMeshes.length) {
-				// Update existing mesh position
 				this.snakeMeshes[i].position.set(pos.x, size / 2 + 0.002, pos.z);
+				if (isHead) {
+					const mat = this.snakeMeshes[i].material as MeshStandardMaterial;
+					mat.color.set(headColor);
+					mat.emissive.set(headColor);
+				}
 			} else {
-				// Create new mesh
 				const t = i / Math.max(this.snake.length - 1, 1);
 				const colorIdx = Math.floor(t * (SNAKE_COLORS.length - 1));
-				const baseColor = SNAKE_COLORS[Math.min(colorIdx, SNAKE_COLORS.length - 1)];
+				const baseColor = isHead ? headColor : SNAKE_COLORS[Math.min(colorIdx, SNAKE_COLORS.length - 1)];
 
 				const mat = new MeshStandardMaterial({
 					color: baseColor,
@@ -558,7 +736,6 @@ export class GameManager {
 	}
 
 	private animateIdle(_delta: number) {
-		// Gentle pulsing of obstacle meshes when not playing
 		for (const mesh of this.obstacleMeshes) {
 			const mat = mesh.material as MeshStandardMaterial;
 			mat.emissiveIntensity = 0.6 + Math.sin(this.animTime * 2) * 0.3;
