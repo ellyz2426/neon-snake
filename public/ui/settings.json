@@ -271,6 +271,97 @@
         "dataUid": "uid-17"
       },
       {
+        "sourceTag": "container",
+        "type": "custom",
+        "children": [
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "-- ARENA THEME --"
+            ],
+            "properties": {
+              "fontsize": "11",
+              "color": "#6688aa"
+            },
+            "dataUid": "uid-20"
+          },
+          {
+            "sourceTag": "container",
+            "type": "custom",
+            "children": [
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
+                  "Neon"
+                ],
+                "properties": {
+                  "name": "btn-theme-0",
+                  "fontsize": "10",
+                  "color": "#000000",
+                  "backgroundcolor": "#00ccff",
+                  "padding": "5",
+                  "borderradius": "4",
+                  "cursor": "pointer",
+                  "fontweight": "bold"
+                },
+                "dataUid": "uid-22"
+              },
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
+                  "Lava"
+                ],
+                "properties": {
+                  "name": "btn-theme-1",
+                  "fontsize": "10",
+                  "color": "#aaaacc",
+                  "backgroundcolor": "#222244",
+                  "padding": "5",
+                  "borderradius": "4",
+                  "cursor": "pointer",
+                  "fontweight": "bold"
+                },
+                "dataUid": "uid-23"
+              },
+              {
+                "sourceTag": "text",
+                "type": "custom",
+                "children": [
+                  "Arctic"
+                ],
+                "properties": {
+                  "name": "btn-theme-2",
+                  "fontsize": "10",
+                  "color": "#aaaacc",
+                  "backgroundcolor": "#222244",
+                  "padding": "5",
+                  "borderradius": "4",
+                  "cursor": "pointer",
+                  "fontweight": "bold"
+                },
+                "dataUid": "uid-24"
+              }
+            ],
+            "properties": {
+              "flexdirection": "row",
+              "gap": "4",
+              "justifycontent": "center"
+            },
+            "dataUid": "uid-21"
+          }
+        ],
+        "properties": {
+          "flexdirection": "column",
+          "alignitems": "center",
+          "gap": "4",
+          "width": "100%"
+        },
+        "dataUid": "uid-19"
+      },
+      {
         "sourceTag": "text",
         "type": "custom",
         "children": [
@@ -288,7 +379,7 @@
           "cursor": "pointer",
           "margintop": "8"
         },
-        "dataUid": "uid-19"
+        "dataUid": "uid-25"
       }
     ],
     "properties": {
@@ -315,7 +406,7 @@
         "column": 0
       },
       "end": {
-        "line": 130,
+        "line": 166,
         "column": 12
       }
     },
@@ -495,7 +586,67 @@
         "column": 2
       },
       "end": {
-        "line": 129,
+        "line": 152,
+        "column": 14
+      }
+    },
+    "uid-20": {
+      "start": {
+        "line": 119,
+        "column": 4
+      },
+      "end": {
+        "line": 119,
+        "column": 64
+      }
+    },
+    "uid-21": {
+      "start": {
+        "line": 120,
+        "column": 4
+      },
+      "end": {
+        "line": 151,
+        "column": 16
+      }
+    },
+    "uid-22": {
+      "start": {
+        "line": 121,
+        "column": 6
+      },
+      "end": {
+        "line": 130,
+        "column": 18
+      }
+    },
+    "uid-23": {
+      "start": {
+        "line": 131,
+        "column": 6
+      },
+      "end": {
+        "line": 140,
+        "column": 18
+      }
+    },
+    "uid-24": {
+      "start": {
+        "line": 141,
+        "column": 6
+      },
+      "end": {
+        "line": 150,
+        "column": 20
+      }
+    },
+    "uid-25": {
+      "start": {
+        "line": 154,
+        "column": 2
+      },
+      "end": {
+        "line": 165,
         "column": 15
       }
     }

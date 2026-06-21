@@ -8,7 +8,9 @@ import {
 } from '@iwsdk/core';
 import type { Entity } from '@iwsdk/core';
 import type { GameManager } from './game';
-import { GameState, GameMode, Difficulty, SnakeSkin, SNAKE_SKIN_DEFS } from './types';
+import { GameState, GameMode, Difficulty, SnakeSkin, SNAKE_SKIN_DEFS, ArenaTheme, ARENA_THEME_DEFS } from './types';
+import type { ArenaRefs } from './arena';
+import { applyTheme } from './arena';
 
 function setText(doc: UIKitDocument | undefined, id: string, text: string) {
 	if (!doc) return;
@@ -65,6 +67,7 @@ export class UISystem extends createSystem({
 	},
 }) {
 	private game!: GameManager;
+	private arenaRefs: ArenaRefs | null = null;
 	private hudDoc: UIKitDocument | null = null;
 	private menuDoc: UIKitDocument | null = null;
 	private gameoverDoc: UIKitDocument | null = null;
@@ -99,8 +102,9 @@ export class UISystem extends createSystem({
 	private toastQueue: { title: string; desc: string }[] = [];
 	private volume = 50;
 
-	setRefs(refs: { game: GameManager }) {
+	setRefs(refs: { game: GameManager; arenaRefs?: ArenaRefs }) {
 		this.game = refs.game;
+		if (refs.arenaRefs) this.arenaRefs = refs.arenaRefs;
 		this.game.onAchievement = (title: string, desc: string) => {
 			this.toastQueue.push({ title, desc });
 		};
@@ -378,8 +382,39 @@ export class UISystem extends createSystem({
 			});
 		});
 
+		// Theme buttons
+		for (let i = 0; i < ARENA_THEME_DEFS.length; i++) {
+			const btn = doc.getElementById(`btn-theme-${i}`) as UIKit.Text | undefined;
+			btn?.addEventListener('click', () => {
+				this.game.setTheme(ARENA_THEME_DEFS[i].id);
+				if (this.arenaRefs) applyTheme(this.arenaRefs, ARENA_THEME_DEFS[i].id);
+				this.updateThemeButtons();
+			});
+		}
+
 		this.updateSettingsSkins();
 		this.updateVolumeDisplay();
+		this.updateThemeButtons();
+	}
+
+	private updateThemeButtons() {
+		if (!this.settingsDoc) return;
+		const currentTheme = this.game.getTheme();
+		const themeColors: Record<string, string> = {
+			neon: '#00ccff',
+			lava: '#ff4400',
+			arctic: '#88ccff',
+		};
+		for (let i = 0; i < ARENA_THEME_DEFS.length; i++) {
+			const btn = this.settingsDoc.getElementById(`btn-theme-${i}`) as UIKit.Text | undefined;
+			if (!btn) continue;
+			const active = ARENA_THEME_DEFS[i].id === currentTheme;
+			const color = themeColors[ARENA_THEME_DEFS[i].id] || '#00ccff';
+			btn.setProperties({
+				backgroundColor: active ? color : '#222244',
+				color: active ? '#000000' : '#aaaacc',
+			});
+		}
 	}
 
 	private updateSettingsSkins() {

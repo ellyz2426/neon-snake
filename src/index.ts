@@ -45,7 +45,7 @@ async function main(): Promise<void> {
 	gameSystem.setRefs({ game });
 
 	const uiSystem = world.getSystem(UISystem)!;
-	uiSystem.setRefs({ game });
+	uiSystem.setRefs({ game, arenaRefs });
 
 	// Create UI panels
 	createPanels(world);
@@ -101,7 +101,7 @@ function createPanels(world: World): void {
 	// Settings panel
 	const settingsEntity = world.createTransformEntity();
 	settingsEntity.object3D!.position.set(0, 1.35, -1.2);
-	settingsEntity.addComponent(PanelUI, { config: './ui/settings.json', maxWidth: 450, maxHeight: 500 });
+	settingsEntity.addComponent(PanelUI, { config: './ui/settings.json', maxWidth: 450, maxHeight: 650 });
 	settingsEntity.object3D!.visible = false;
 
 	// Help/Tutorial panel

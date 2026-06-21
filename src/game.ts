@@ -20,7 +20,6 @@ import {
 	GRID_SIZE,
 	CELL_SIZE,
 	SNAKE_SKIN_DEFS,
-	TIME_ATTACK_DURATION,
 	SeededRNG,
 	type GridPos,
 	type GameConfig,
@@ -210,15 +209,12 @@ export class GameManager {
 	private dailyDate = '';
 
 	// Time Attack
-	private timeRemaining = 0;
+	private timeAttackRemaining = 0;
+	private timeAttackDuration = 60; // seconds
 	private timeAttackBest = 0;
 
 	// Active skin
 	private currentSkinDef: SnakeSkinDef = SNAKE_SKIN_DEFS[0];
-
-	// Time Attack
-	private timeAttackRemaining = 0;
-	private timeAttackDuration = 60; // seconds
 
 	// Arena reactivity
 	private gridPulseIntensity = 0;
@@ -231,7 +227,6 @@ export class GameManager {
 	onPowerUp?: (label: string) => void;
 	onLevelUp?: (level: number) => void;
 	onPowerUpActive?: (types: string[]) => void;
-	onTimer?: (remaining: number) => void;
 	onTimerUpdate?: (remaining: number) => void;
 	onTimeUp?: () => void;
 
@@ -316,7 +311,7 @@ export class GameManager {
 	getSkin(): SnakeSkin { return this.config.skin; }
 	getDailyBestScore(): number { return this.dailyBestScore; }
 	getComboCount(): number { return this.comboCount; }
-	getTimeRemaining(): number { return this.timeRemaining; }
+	getTimeRemaining(): number { return this.timeAttackRemaining; }
 	getTheme(): ArenaTheme { return this.config.theme; }
 	getTimeAttackBest(): number { return this.timeAttackBest; }
 	getTimeAttackRemaining(): number { return this.timeAttackRemaining; }

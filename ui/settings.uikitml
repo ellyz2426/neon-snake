@@ -116,6 +116,42 @@
     >Mute</text>
   </container>
 
+  <container flexDirection="column" alignItems="center" gap="4" width="100%">
+    <text fontSize="11" color="#6688aa">-- ARENA THEME --</text>
+    <container flexDirection="row" gap="4" justifyContent="center">
+      <text
+        name="btn-theme-0"
+        fontSize="10"
+        color="#000000"
+        backgroundColor="#00ccff"
+        padding="5"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Neon</text>
+      <text
+        name="btn-theme-1"
+        fontSize="10"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="5"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Lava</text>
+      <text
+        name="btn-theme-2"
+        fontSize="10"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="5"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Arctic</text>
+    </container>
+  </container>
+
   <text
     name="btn-settings-close"
     fontSize="12"
