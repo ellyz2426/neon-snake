@@ -1,0 +1,105 @@
+<container
+  name="menu-root"
+  flexDirection="column"
+  alignItems="center"
+  justifyContent="flex-start"
+  width="100%"
+  height="100%"
+  padding="16"
+  backgroundColor="#080822e0"
+  borderRadius="12"
+  borderColor="#00ccff"
+  borderWidth="2"
+  gap="10"
+>
+  <text fontSize="28" color="#00ff88" fontWeight="bold">NEON SNAKE</text>
+  <text name="menu-high-score" fontSize="12" color="#ffaa00">Best: 0</text>
+
+  <container flexDirection="column" alignItems="center" gap="4" marginTop="8">
+    <text fontSize="11" color="#6688aa">-- MODE --</text>
+    <container flexDirection="row" gap="6">
+      <text
+        name="btn-classic"
+        fontSize="11"
+        color="#000000"
+        backgroundColor="#00ff88"
+        padding="6"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Classic</text>
+      <text
+        name="btn-speed"
+        fontSize="11"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="6"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Speed</text>
+      <text
+        name="btn-maze"
+        fontSize="11"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="6"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Maze</text>
+    </container>
+  </container>
+
+  <container flexDirection="column" alignItems="center" gap="4">
+    <text fontSize="11" color="#6688aa">-- DIFFICULTY --</text>
+    <container flexDirection="row" gap="6">
+      <text
+        name="btn-easy"
+        fontSize="11"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="6"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Easy</text>
+      <text
+        name="btn-normal"
+        fontSize="11"
+        color="#000000"
+        backgroundColor="#00ccff"
+        padding="6"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Normal</text>
+      <text
+        name="btn-hard"
+        fontSize="11"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="6"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Hard</text>
+    </container>
+  </container>
+
+  <text
+    name="btn-start"
+    fontSize="16"
+    color="#000000"
+    backgroundColor="#00ff88"
+    padding="10"
+    paddingLeft="30"
+    paddingRight="30"
+    borderRadius="6"
+    cursor="pointer"
+    fontWeight="bold"
+    marginTop="8"
+  >START</text>
+
+  <text fontSize="9" color="#445566" marginTop="4">Arrow keys / WASD / XR Thumbstick</text>
+</container>

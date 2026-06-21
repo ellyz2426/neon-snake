@@ -1,0 +1,4 @@
+node_modules/
+.iwsdk/
+screenshot-*.png
+dist/

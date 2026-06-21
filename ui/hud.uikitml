@@ -1,0 +1,26 @@
+<container
+  name="hud-root"
+  flexDirection="row"
+  justifyContent="space-between"
+  alignItems="center"
+  width="100%"
+  height="100%"
+  padding="8"
+  backgroundColor="#0a0a2280"
+  borderRadius="8"
+  borderColor="#00ff88"
+  borderWidth="1"
+>
+  <container flexDirection="column" alignItems="center" gap="2">
+    <text name="score-label" fontSize="10" color="#00ccff" fontWeight="bold">SCORE</text>
+    <text name="score-val" fontSize="18" color="#00ff88" fontWeight="bold">0</text>
+  </container>
+  <container flexDirection="column" alignItems="center" gap="2">
+    <text name="length-label" fontSize="10" color="#00ccff" fontWeight="bold">LENGTH</text>
+    <text name="length-val" fontSize="18" color="#ffffff" fontWeight="bold">3</text>
+  </container>
+  <container flexDirection="column" alignItems="center" gap="2">
+    <text name="high-label" fontSize="10" color="#00ccff" fontWeight="bold">BEST</text>
+    <text name="high-val" fontSize="18" color="#ffaa00" fontWeight="bold">0</text>
+  </container>
+</container>
