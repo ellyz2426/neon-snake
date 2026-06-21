@@ -212,6 +212,35 @@
           "display": "none"
         },
         "dataUid": "uid-15"
+      },
+      {
+        "sourceTag": "container",
+        "type": "custom",
+        "children": [
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "60"
+            ],
+            "properties": {
+              "name": "timer-val",
+              "fontsize": "14",
+              "color": "#ff4444",
+              "fontweight": "bold"
+            },
+            "dataUid": "uid-19"
+          }
+        ],
+        "properties": {
+          "name": "timer-row",
+          "flexdirection": "row",
+          "justifycontent": "center",
+          "alignitems": "center",
+          "width": "100%",
+          "display": "none"
+        },
+        "dataUid": "uid-18"
       }
     ],
     "properties": {
@@ -237,7 +266,7 @@
         "column": 0
       },
       "end": {
-        "line": 35,
+        "line": 38,
         "column": 12
       }
     },
@@ -399,6 +428,26 @@
       "end": {
         "line": 33,
         "column": 83
+      }
+    },
+    "uid-18": {
+      "start": {
+        "line": 35,
+        "column": 2
+      },
+      "end": {
+        "line": 37,
+        "column": 14
+      }
+    },
+    "uid-19": {
+      "start": {
+        "line": 36,
+        "column": 4
+      },
+      "end": {
+        "line": 36,
+        "column": 84
       }
     }
   }

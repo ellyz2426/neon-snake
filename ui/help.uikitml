@@ -1,0 +1,54 @@
+<container
+  name="help-root"
+  flexDirection="column"
+  alignItems="center"
+  width="100%"
+  height="100%"
+  padding="12"
+  backgroundColor="#080822e0"
+  borderRadius="12"
+  borderColor="#44ff88"
+  borderWidth="2"
+  gap="6"
+>
+  <text fontSize="20" color="#44ff88" fontWeight="bold">HOW TO PLAY</text>
+
+  <container flexDirection="column" gap="4" width="100%">
+    <text fontSize="11" color="#00ccff" fontWeight="bold">CONTROLS</text>
+    <text fontSize="9" color="#aaaacc">Arrow Keys / WASD - Move</text>
+    <text fontSize="9" color="#aaaacc">P / Escape - Pause</text>
+    <text fontSize="9" color="#aaaacc">XR Thumbstick - Move in VR</text>
+    <text fontSize="9" color="#aaaacc">XR Trigger - Start / A Button - Pause</text>
+  </container>
+
+  <container flexDirection="column" gap="4" width="100%">
+    <text fontSize="11" color="#00ccff" fontWeight="bold">GAME MODES</text>
+    <text fontSize="9" color="#aaaacc">Classic - Standard snake gameplay</text>
+    <text fontSize="9" color="#aaaacc">Speed - Snake gets faster each food</text>
+    <text fontSize="9" color="#aaaacc">Maze - Navigate around obstacles</text>
+    <text fontSize="9" color="#aaaacc">Wrap - Walls teleport to opposite side</text>
+    <text fontSize="9" color="#aaaacc">Daily - Seeded daily challenge maze</text>
+    <text fontSize="9" color="#aaaacc">Timed - Score max points in 60 seconds</text>
+  </container>
+
+  <container flexDirection="column" gap="4" width="100%">
+    <text fontSize="11" color="#00ccff" fontWeight="bold">TIPS</text>
+    <text fontSize="9" color="#ffaa00">Eat food quickly for combo multipliers</text>
+    <text fontSize="9" color="#ffaa00">Collect power-ups for special abilities</text>
+    <text fontSize="9" color="#ffaa00">Level up every 8 food for faster speed</text>
+  </container>
+
+  <text
+    name="btn-help-close"
+    fontSize="11"
+    color="#000000"
+    backgroundColor="#44ff88"
+    padding="5"
+    paddingLeft="20"
+    paddingRight="20"
+    borderRadius="4"
+    cursor="pointer"
+    fontWeight="bold"
+    marginTop="2"
+  >CLOSE</text>
+</container>

@@ -15,16 +15,19 @@ import {
 	GameMode,
 	Difficulty,
 	SnakeSkin,
+	ArenaTheme,
 	DIFFICULTY_SPEEDS,
 	GRID_SIZE,
 	CELL_SIZE,
 	SNAKE_SKIN_DEFS,
+	TIME_ATTACK_DURATION,
 	SeededRNG,
 	type GridPos,
 	type GameConfig,
 	type SnakeSkinDef,
 } from './types';
 import { gridToWorld } from './arena';
+import type { ArenaRefs } from './arena';
 import { AudioManager } from './audio';
 import { AchievementManager, type GameStats } from './achievements';
 import { ParticleSystem } from './particles';
@@ -140,6 +143,7 @@ const FOOD_COLORS = [0xff2266, 0xff4488, 0xffaa00, 0x00ccff, 0xaa44ff];
 export class GameManager {
 	private world: World;
 	private arenaGroup: Group;
+	private arenaRefs: ArenaRefs;
 	private snakeGroup: Group;
 	private foodGroup: Group;
 	private obstacleGroup: Group;
@@ -163,6 +167,7 @@ export class GameManager {
 		mode: GameMode.Classic,
 		difficulty: Difficulty.Normal,
 		skin: SnakeSkin.NeonGreen,
+		theme: ArenaTheme.Neon,
 	};
 
 	private snakeMeshes: Mesh[] = [];
@@ -204,8 +209,19 @@ export class GameManager {
 	private dailyBestScore = 0;
 	private dailyDate = '';
 
+	// Time Attack
+	private timeRemaining = 0;
+	private timeAttackBest = 0;
+
 	// Active skin
 	private currentSkinDef: SnakeSkinDef = SNAKE_SKIN_DEFS[0];
+
+	// Time Attack
+	private timeAttackRemaining = 0;
+	private timeAttackDuration = 60; // seconds
+
+	// Arena reactivity
+	private gridPulseIntensity = 0;
 
 	// Callbacks
 	onScoreChange?: (score: number, highScore: number, length: number) => void;
@@ -215,24 +231,28 @@ export class GameManager {
 	onPowerUp?: (label: string) => void;
 	onLevelUp?: (level: number) => void;
 	onPowerUpActive?: (types: string[]) => void;
+	onTimer?: (remaining: number) => void;
+	onTimerUpdate?: (remaining: number) => void;
+	onTimeUp?: () => void;
 
-	constructor(world: World, arenaGroup: Group) {
+	constructor(world: World, arenaRefs: ArenaRefs) {
 		this.world = world;
-		this.arenaGroup = arenaGroup;
+		this.arenaRefs = arenaRefs;
+		this.arenaGroup = arenaRefs.group;
 
 		this.snakeGroup = new Group();
 		this.foodGroup = new Group();
 		this.obstacleGroup = new Group();
-		arenaGroup.add(this.snakeGroup);
-		arenaGroup.add(this.foodGroup);
-		arenaGroup.add(this.obstacleGroup);
+		this.arenaGroup.add(this.snakeGroup);
+		this.arenaGroup.add(this.foodGroup);
+		this.arenaGroup.add(this.obstacleGroup);
 
 		this.audio = new AudioManager();
 		this.achievements = new AchievementManager();
-		this.particles = new ParticleSystem(arenaGroup);
+		this.particles = new ParticleSystem(this.arenaGroup);
 		this.statsTracker = new StatsTracker();
-		this.powerUps = new PowerUpManager(arenaGroup);
-		this.trail = new TrailSystem(arenaGroup);
+		this.powerUps = new PowerUpManager(this.arenaGroup);
+		this.trail = new TrailSystem(this.arenaGroup);
 		this.leaderboard = new LeaderboardManager();
 
 		this.powerUps.onCollect = (type, label) => {
@@ -274,6 +294,12 @@ export class GameManager {
 					this.config.skin = skinDef.id;
 				}
 			}
+			const themeRaw = localStorage.getItem('neon-snake-theme');
+			if (themeRaw && Object.values(ArenaTheme).includes(themeRaw as ArenaTheme)) {
+				this.config.theme = themeRaw as ArenaTheme;
+			}
+			const taBest = localStorage.getItem('neon-snake-ta-best');
+			if (taBest) this.timeAttackBest = parseInt(taBest, 10) || 0;
 		} catch {}
 
 		this.originalCamPos = world.camera.position.clone();
@@ -290,6 +316,11 @@ export class GameManager {
 	getSkin(): SnakeSkin { return this.config.skin; }
 	getDailyBestScore(): number { return this.dailyBestScore; }
 	getComboCount(): number { return this.comboCount; }
+	getTimeRemaining(): number { return this.timeRemaining; }
+	getTheme(): ArenaTheme { return this.config.theme; }
+	getTimeAttackBest(): number { return this.timeAttackBest; }
+	getTimeAttackRemaining(): number { return this.timeAttackRemaining; }
+	isTimeAttackMode(): boolean { return this.config.mode === GameMode.TimeAttack; }
 	getActivePowerUpLabels(): string[] {
 		return this.powerUps.getActiveTypes().map(t => {
 			switch (t) {
@@ -304,6 +335,10 @@ export class GameManager {
 
 	setMode(mode: GameMode) { this.config.mode = mode; }
 	setDifficulty(diff: Difficulty) { this.config.difficulty = diff; }
+	setTheme(theme: ArenaTheme) {
+		this.config.theme = theme;
+		try { localStorage.setItem('neon-snake-theme', theme); } catch {}
+	}
 
 	setSkin(skin: SnakeSkin) {
 		const def = SNAKE_SKIN_DEFS.find(s => s.id === skin);
@@ -365,6 +400,20 @@ export class GameManager {
 			}
 			// Daily uses Normal difficulty always
 			this.moveInterval = DIFFICULTY_SPEEDS[Difficulty.Normal];
+		} else if (this.config.mode === GameMode.TimeAttack) {
+			this.timeAttackRemaining = this.timeAttackDuration;
+			// Time Attack uses Normal speed with some random obstacles
+			this.moveInterval = DIFFICULTY_SPEEDS[Difficulty.Normal];
+			const obsCount = 4 + Math.floor(Math.random() * 6);
+			for (let i = 0; i < obsCount; i++) {
+				const ox = 1 + Math.floor(Math.random() * (GRID_SIZE - 2));
+				const oz = 1 + Math.floor(Math.random() * (GRID_SIZE - 2));
+				const isSnake = this.snake.some(s => s.x === ox && s.z === oz);
+				const isObs = this.obstacles.some(o => o.x === ox && o.z === oz);
+				if (!isSnake && !isObs) {
+					this.obstacles.push({ x: ox, z: oz });
+				}
+			}
 		}
 
 		this.clearVisuals();
@@ -456,6 +505,26 @@ export class GameManager {
 
 		this.sessionTime += delta;
 		this.powerUps.update(delta);
+
+		// Time Attack countdown
+		if (this.config.mode === GameMode.TimeAttack) {
+			this.timeAttackRemaining -= delta;
+			this.onTimerUpdate?.(this.timeAttackRemaining);
+			if (this.timeAttackRemaining <= 0) {
+				this.timeAttackRemaining = 0;
+				this.onTimeUp?.();
+				this.gameOver();
+				return;
+			}
+		}
+
+		// Arena reactivity — pulse grid during combos
+		if (this.comboCount >= 2) {
+			this.gridPulseIntensity = Math.min(1.0, this.comboCount * 0.15);
+		} else {
+			this.gridPulseIntensity = Math.max(0, this.gridPulseIntensity - delta * 2);
+		}
+		this.updateArenaReactivity(delta);
 
 		// Notify active power-ups for HUD
 		const activeLabels = this.getActivePowerUpLabels();
@@ -629,6 +698,12 @@ export class GameManager {
 			}
 		}
 
+		// Time Attack best score tracking
+		if (this.config.mode === GameMode.TimeAttack && this.score > this.timeAttackBest) {
+			this.timeAttackBest = this.score;
+			try { localStorage.setItem('neon-snake-ta-best', String(this.timeAttackBest)); } catch {}
+		}
+
 		const stats: GameStats = {
 			score: this.score,
 			highScore: this.highScore,
@@ -649,6 +724,7 @@ export class GameManager {
 			level: this.level,
 			powerUpsCollected: this.powerUpsCollectedThisGame,
 			dailyChallengeScore: this.config.mode === GameMode.Daily ? this.score : 0,
+			timeAttackScore: this.config.mode === GameMode.TimeAttack ? this.score : 0,
 		};
 
 		const newAchs = this.achievements.check(stats);
@@ -855,6 +931,41 @@ export class GameManager {
 		for (const mesh of this.obstacleMeshes) {
 			const mat = mesh.material as MeshStandardMaterial;
 			mat.emissiveIntensity = 0.6 + Math.sin(this.animTime * 2) * 0.3;
+		}
+	}
+
+	private updateArenaReactivity(_delta: number) {
+		const refs = this.arenaRefs;
+		const pulse = this.gridPulseIntensity;
+
+		// Grid lines glow during combos
+		if (pulse > 0) {
+			const wave = Math.sin(this.animTime * 6) * 0.3 + 0.7;
+			const alpha = 0.4 + pulse * 0.4 * wave;
+			refs.gridLineMat.opacity = alpha;
+			const r = 0x1a / 255 + pulse * (0x00 / 255 - 0x1a / 255) * wave;
+			const g = 0x22 / 255 + pulse * (0xff / 255 - 0x22 / 255) * wave * 0.3;
+			const b = 0x55 / 255 + pulse * (0x88 / 255 - 0x55 / 255) * wave;
+			refs.gridLineMat.color.setRGB(r, g, b);
+		} else {
+			refs.gridLineMat.opacity = 0.4;
+			refs.gridLineMat.color.setRGB(0x1a / 255, 0x22 / 255, 0x55 / 255);
+		}
+
+		// Wall glow intensity shifts with power-ups
+		const hasPower = this.powerUps.getActiveTypes().length > 0;
+		const wallPulse = hasPower ? (Math.sin(this.animTime * 4) * 0.3 + 0.7) : 0;
+		refs.wallMat.emissiveIntensity = 2.0 + wallPulse;
+
+		// Board shimmer during Time Attack urgency
+		if (this.config.mode === GameMode.TimeAttack && this.timeAttackRemaining < 10) {
+			const urgency = 1 - (this.timeAttackRemaining / 10);
+			const redShift = urgency * 0.05 * (Math.sin(this.animTime * 8) * 0.5 + 0.5);
+			refs.boardMat.emissive.setRGB(redShift, 0, 0);
+			refs.boardMat.emissiveIntensity = 1.0;
+		} else {
+			refs.boardMat.emissive.setRGB(0, 0, 0);
+			refs.boardMat.emissiveIntensity = 0;
 		}
 	}
 }

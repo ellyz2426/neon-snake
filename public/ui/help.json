@@ -1,0 +1,510 @@
+{
+  "element": {
+    "sourceTag": "container",
+    "type": "custom",
+    "children": [
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "HOW TO PLAY"
+        ],
+        "properties": {
+          "fontsize": "20",
+          "color": "#44ff88",
+          "fontweight": "bold"
+        },
+        "dataUid": "uid-2"
+      },
+      {
+        "sourceTag": "container",
+        "type": "custom",
+        "children": [
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "CONTROLS"
+            ],
+            "properties": {
+              "fontsize": "11",
+              "color": "#00ccff",
+              "fontweight": "bold"
+            },
+            "dataUid": "uid-4"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Arrow Keys / WASD - Move"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-5"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "P / Escape - Pause"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-6"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "XR Thumbstick - Move in VR"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-7"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "XR Trigger - Start / A Button - Pause"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-8"
+          }
+        ],
+        "properties": {
+          "flexdirection": "column",
+          "gap": "4",
+          "width": "100%"
+        },
+        "dataUid": "uid-3"
+      },
+      {
+        "sourceTag": "container",
+        "type": "custom",
+        "children": [
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "GAME MODES"
+            ],
+            "properties": {
+              "fontsize": "11",
+              "color": "#00ccff",
+              "fontweight": "bold"
+            },
+            "dataUid": "uid-10"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Classic - Standard snake gameplay"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-11"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Speed - Snake gets faster each food"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-12"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Maze - Navigate around obstacles"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-13"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Wrap - Walls teleport to opposite side"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-14"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Daily - Seeded daily challenge maze"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-15"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Timed - Score max points in 60 seconds"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#aaaacc"
+            },
+            "dataUid": "uid-16"
+          }
+        ],
+        "properties": {
+          "flexdirection": "column",
+          "gap": "4",
+          "width": "100%"
+        },
+        "dataUid": "uid-9"
+      },
+      {
+        "sourceTag": "container",
+        "type": "custom",
+        "children": [
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "TIPS"
+            ],
+            "properties": {
+              "fontsize": "11",
+              "color": "#00ccff",
+              "fontweight": "bold"
+            },
+            "dataUid": "uid-18"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Eat food quickly for combo multipliers"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#ffaa00"
+            },
+            "dataUid": "uid-19"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Collect power-ups for special abilities"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#ffaa00"
+            },
+            "dataUid": "uid-20"
+          },
+          {
+            "sourceTag": "text",
+            "type": "custom",
+            "children": [
+              "Level up every 8 food for faster speed"
+            ],
+            "properties": {
+              "fontsize": "9",
+              "color": "#ffaa00"
+            },
+            "dataUid": "uid-21"
+          }
+        ],
+        "properties": {
+          "flexdirection": "column",
+          "gap": "4",
+          "width": "100%"
+        },
+        "dataUid": "uid-17"
+      },
+      {
+        "sourceTag": "text",
+        "type": "custom",
+        "children": [
+          "CLOSE"
+        ],
+        "properties": {
+          "name": "btn-help-close",
+          "fontsize": "11",
+          "color": "#000000",
+          "backgroundcolor": "#44ff88",
+          "padding": "5",
+          "paddingleft": "20",
+          "paddingright": "20",
+          "borderradius": "4",
+          "cursor": "pointer",
+          "fontweight": "bold",
+          "margintop": "2"
+        },
+        "dataUid": "uid-22"
+      }
+    ],
+    "properties": {
+      "name": "help-root",
+      "flexdirection": "column",
+      "alignitems": "center",
+      "width": "100%",
+      "height": "100%",
+      "padding": "12",
+      "backgroundcolor": "#080822e0",
+      "borderradius": "12",
+      "bordercolor": "#44ff88",
+      "borderwidth": "2",
+      "gap": "6"
+    },
+    "dataUid": "uid-1"
+  },
+  "classes": {},
+  "ranges": {
+    "uid-1": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 53,
+        "column": 12
+      }
+    },
+    "uid-2": {
+      "start": {
+        "line": 13,
+        "column": 2
+      },
+      "end": {
+        "line": 13,
+        "column": 74
+      }
+    },
+    "uid-3": {
+      "start": {
+        "line": 15,
+        "column": 2
+      },
+      "end": {
+        "line": 21,
+        "column": 14
+      }
+    },
+    "uid-4": {
+      "start": {
+        "line": 16,
+        "column": 4
+      },
+      "end": {
+        "line": 16,
+        "column": 73
+      }
+    },
+    "uid-5": {
+      "start": {
+        "line": 17,
+        "column": 4
+      },
+      "end": {
+        "line": 17,
+        "column": 70
+      }
+    },
+    "uid-6": {
+      "start": {
+        "line": 18,
+        "column": 4
+      },
+      "end": {
+        "line": 18,
+        "column": 64
+      }
+    },
+    "uid-7": {
+      "start": {
+        "line": 19,
+        "column": 4
+      },
+      "end": {
+        "line": 19,
+        "column": 72
+      }
+    },
+    "uid-8": {
+      "start": {
+        "line": 20,
+        "column": 4
+      },
+      "end": {
+        "line": 20,
+        "column": 83
+      }
+    },
+    "uid-9": {
+      "start": {
+        "line": 23,
+        "column": 2
+      },
+      "end": {
+        "line": 31,
+        "column": 14
+      }
+    },
+    "uid-10": {
+      "start": {
+        "line": 24,
+        "column": 4
+      },
+      "end": {
+        "line": 24,
+        "column": 75
+      }
+    },
+    "uid-11": {
+      "start": {
+        "line": 25,
+        "column": 4
+      },
+      "end": {
+        "line": 25,
+        "column": 79
+      }
+    },
+    "uid-12": {
+      "start": {
+        "line": 26,
+        "column": 4
+      },
+      "end": {
+        "line": 26,
+        "column": 81
+      }
+    },
+    "uid-13": {
+      "start": {
+        "line": 27,
+        "column": 4
+      },
+      "end": {
+        "line": 27,
+        "column": 78
+      }
+    },
+    "uid-14": {
+      "start": {
+        "line": 28,
+        "column": 4
+      },
+      "end": {
+        "line": 28,
+        "column": 84
+      }
+    },
+    "uid-15": {
+      "start": {
+        "line": 29,
+        "column": 4
+      },
+      "end": {
+        "line": 29,
+        "column": 81
+      }
+    },
+    "uid-16": {
+      "start": {
+        "line": 30,
+        "column": 4
+      },
+      "end": {
+        "line": 30,
+        "column": 84
+      }
+    },
+    "uid-17": {
+      "start": {
+        "line": 33,
+        "column": 2
+      },
+      "end": {
+        "line": 38,
+        "column": 14
+      }
+    },
+    "uid-18": {
+      "start": {
+        "line": 34,
+        "column": 4
+      },
+      "end": {
+        "line": 34,
+        "column": 69
+      }
+    },
+    "uid-19": {
+      "start": {
+        "line": 35,
+        "column": 4
+      },
+      "end": {
+        "line": 35,
+        "column": 84
+      }
+    },
+    "uid-20": {
+      "start": {
+        "line": 36,
+        "column": 4
+      },
+      "end": {
+        "line": 36,
+        "column": 85
+      }
+    },
+    "uid-21": {
+      "start": {
+        "line": 37,
+        "column": 4
+      },
+      "end": {
+        "line": 37,
+        "column": 84
+      }
+    },
+    "uid-22": {
+      "start": {
+        "line": 40,
+        "column": 2
+      },
+      "end": {
+        "line": 52,
+        "column": 15
+      }
+    }
+  }
+}

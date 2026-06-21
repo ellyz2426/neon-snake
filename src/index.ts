@@ -5,7 +5,7 @@ import {
 import { GameManager } from './game';
 import { GameSystem } from './game-system';
 import { UISystem } from './ui-system';
-import { createArena } from './arena';
+import { createArena, applyTheme } from './arena';
 
 async function main(): Promise<void> {
 	const container = document.getElementById('app') as HTMLDivElement;
@@ -29,10 +29,13 @@ async function main(): Promise<void> {
 	world.camera.lookAt(0, 0.9, -1.2);
 
 	// Create the arena
-	const arenaGroup = createArena(world);
+	const arenaRefs = createArena(world);
 
 	// Create the game manager
-	const game = new GameManager(world, arenaGroup);
+	const game = new GameManager(world, arenaRefs);
+
+	// Apply saved theme
+	applyTheme(arenaRefs, game.getTheme());
 
 	// Register systems
 	world.registerSystem(GameSystem);
@@ -52,12 +55,12 @@ function createPanels(world: World): void {
 	// HUD - positioned above the board
 	const hudEntity = world.createTransformEntity();
 	hudEntity.object3D!.position.set(0, 1.65, -1.0);
-	hudEntity.addComponent(PanelUI, { config: './ui/hud.json', maxWidth: 500, maxHeight: 120 });
+	hudEntity.addComponent(PanelUI, { config: './ui/hud.json', maxWidth: 500, maxHeight: 150 });
 
 	// Menu panel
 	const menuEntity = world.createTransformEntity();
 	menuEntity.object3D!.position.set(0, 1.35, -1.2);
-	menuEntity.addComponent(PanelUI, { config: './ui/menu.json', maxWidth: 500, maxHeight: 600 });
+	menuEntity.addComponent(PanelUI, { config: './ui/menu.json', maxWidth: 500, maxHeight: 650 });
 
 	// Game over panel
 	const gameoverEntity = world.createTransformEntity();
@@ -100,6 +103,12 @@ function createPanels(world: World): void {
 	settingsEntity.object3D!.position.set(0, 1.35, -1.2);
 	settingsEntity.addComponent(PanelUI, { config: './ui/settings.json', maxWidth: 450, maxHeight: 500 });
 	settingsEntity.object3D!.visible = false;
+
+	// Help/Tutorial panel
+	const helpEntity = world.createTransformEntity();
+	helpEntity.object3D!.position.set(0, 1.35, -1.2);
+	helpEntity.addComponent(PanelUI, { config: './ui/help.json', maxWidth: 450, maxHeight: 650 });
+	helpEntity.object3D!.visible = false;
 }
 
 main().catch(console.error);

@@ -31,6 +31,7 @@ export interface GameStats {
 	level: number;
 	powerUpsCollected: number;
 	dailyChallengeScore: number;
+	timeAttackScore: number;
 }
 
 const ACHIEVEMENT_DEFS: { id: string; title: string; desc: string; icon: string; check: AchievementChecker }[] = [
@@ -89,6 +90,9 @@ const ACHIEVEMENT_DEFS: { id: string; title: string; desc: string; icon: string;
 	{ id: 'wrap-master', title: 'Wrap Master', desc: 'Score 500 in Wrap mode', icon: 'W', check: s => s.mode === 'wrap' && s.score >= 500 },
 	{ id: 'daily-200', title: 'Daily Driver', desc: 'Score 200 in Daily Challenge', icon: 'D', check: s => s.mode === 'daily' && s.score >= 200 },
 	{ id: 'daily-500', title: 'Daily Expert', desc: 'Score 500 in Daily Challenge', icon: 'D', check: s => s.mode === 'daily' && s.score >= 500 },
+	{ id: 'ta-200', title: 'Time Bandit', desc: 'Score 200 in Time Attack', icon: 'TA', check: s => s.mode === 'timeattack' && s.score >= 200 },
+	{ id: 'ta-500', title: 'Clock Crusher', desc: 'Score 500 in Time Attack', icon: 'TA', check: s => s.mode === 'timeattack' && s.score >= 500 },
+	{ id: 'ta-1000', title: 'Time Lord', desc: 'Score 1000 in Time Attack', icon: 'TA', check: s => s.mode === 'timeattack' && s.score >= 1000 },
 
 	// === DEATH ===
 	{ id: 'wall-hugger', title: 'Wall Hugger', desc: 'Die by hitting a wall', icon: 'W', check: s => s.deathByWall },
@@ -115,9 +119,45 @@ const ACHIEVEMENT_DEFS: { id: string; title: string; desc: string; icon: string;
 	{ id: 'power-25', title: 'Power Junkie', desc: 'Collect 25 power-ups total', icon: 'P', check: s => s.powerUpsCollected >= 25 },
 
 	// === SPECIAL ===
-	{ id: 'all-modes', title: 'Versatile', desc: 'Score 100 in all 4 modes', icon: 'V', check: () => false }, // Checked separately
+	{ id: 'all-modes', title: 'Versatile', desc: 'Score 100 in all 5 modes', icon: 'V', check: () => false }, // Checked separately
 	{ id: 'all-diff', title: 'Adaptable', desc: 'Score 200 on all 3 difficulties', icon: 'A', check: () => false }, // Checked separately
 	{ id: 'no-power', title: 'Purist', desc: 'Score 300 without power-ups', icon: '~', check: s => s.powerUpsCollected === 0 && s.score >= 300 },
+	{ id: 'speed-freak', title: 'Speed Freak', desc: 'Score 200 in Time Attack on Hard', icon: 'SF', check: s => s.mode === 'timeattack' && s.difficulty === 'hard' && s.score >= 200 },
+	{ id: 'marathon', title: 'Marathon', desc: 'Play for 2 hours total', icon: 'MR', check: s => s.timePlayed >= 7200 },
+	{ id: 'combo-master', title: 'Combo Architect', desc: 'Get a 15x combo', icon: 'x+', check: s => s.maxCombo >= 15 },
+
+	// === TIME ATTACK ===
+	{ id: 'ta-100', title: 'Time Trial', desc: 'Score 100 in Time Attack', icon: 'TA', check: s => s.mode === 'timeattack' && s.score >= 100 },
+	{ id: 'ta-300', title: 'Speed Eater', desc: 'Score 300 in Time Attack', icon: 'TA', check: s => s.mode === 'timeattack' && s.score >= 300 },
+	{ id: 'ta-500', title: 'Time Lord', desc: 'Score 500 in Time Attack', icon: 'TA', check: s => s.mode === 'timeattack' && s.score >= 500 },
+	{ id: 'ta-1000', title: 'Chrono Master', desc: 'Score 1000 in Time Attack', icon: 'TA', check: s => s.mode === 'timeattack' && s.score >= 1000 },
+
+	// === ADVANCED LENGTH ===
+	{ id: 'snake-150', title: 'Colossus', desc: 'Reach length 150', icon: '>>', check: s => s.snakeLength >= 150 },
+	{ id: 'snake-200', title: 'Leviathan', desc: 'Reach length 200', icon: '>>', check: s => s.snakeLength >= 200 },
+
+	// === ADVANCED SCORE ===
+	{ id: 'score-20k', title: 'Ascended', desc: 'Score 20000 points', icon: '!!', check: s => s.score >= 20000 },
+
+	// === COMBO MASTERY ===
+	{ id: 'combo-30', title: 'Unstoppable', desc: 'Get a 30x combo', icon: 'xx', check: s => s.maxCombo >= 30 },
+	{ id: 'combo-50', title: 'Perfect Chain', desc: 'Get a 50x combo', icon: 'xx', check: s => s.maxCombo >= 50 },
+
+	// === GAMES ===
+	{ id: 'games-200', title: 'Lifer', desc: 'Play 200 games', icon: '#', check: s => s.gamesPlayed >= 200 },
+	{ id: 'games-500', title: 'Eternal', desc: 'Play 500 games', icon: '#', check: s => s.gamesPlayed >= 500 },
+
+	// === FOOD ===
+	{ id: 'food-2500', title: 'World Eater', desc: 'Eat 2500 total food', icon: 'F', check: s => s.totalFoodEaten >= 2500 },
+
+	// === MASTERY ===
+	{ id: 'speed-1000', title: 'Blur', desc: 'Score 1000 in Speed mode', icon: 'S', check: s => s.mode === 'speed' && s.score >= 1000 },
+	{ id: 'wrap-1000', title: 'Warp Speed', desc: 'Score 1000 in Wrap', icon: 'W', check: s => s.mode === 'wrap' && s.score >= 1000 },
+	{ id: 'maze-1000', title: 'Minotaur', desc: 'Score 1000 in Maze', icon: 'M', check: s => s.mode === 'maze' && s.score >= 1000 },
+	{ id: 'level-20', title: 'Pinnacle', desc: 'Reach level 20', icon: 'L+', check: s => s.level >= 20 },
+	{ id: 'level-30', title: 'Transcend', desc: 'Reach level 30', icon: 'L+', check: s => s.level >= 30 },
+	{ id: 'power-50', title: 'Power Addict', desc: 'Collect 50 power-ups', icon: 'P', check: s => s.powerUpsCollected >= 50 },
+	{ id: 'power-100', title: 'Empowered', desc: 'Collect 100 power-ups', icon: 'P', check: s => s.powerUpsCollected >= 100 },
 ];
 
 export class AchievementManager {
@@ -161,7 +201,8 @@ export class AchievementManager {
 				earned = (this.modeBestScores['classic'] ?? 0) >= 100 &&
 				         (this.modeBestScores['speed'] ?? 0) >= 100 &&
 				         (this.modeBestScores['maze'] ?? 0) >= 100 &&
-				         (this.modeBestScores['wrap'] ?? 0) >= 100;
+				         (this.modeBestScores['wrap'] ?? 0) >= 100 &&
+				         (this.modeBestScores['timeattack'] ?? 0) >= 100;
 			} else if (def.id === 'all-diff') {
 				earned = (this.diffBestScores['easy'] ?? 0) >= 200 &&
 				         (this.diffBestScores['normal'] ?? 0) >= 200 &&

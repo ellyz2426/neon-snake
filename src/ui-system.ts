@@ -59,6 +59,10 @@ export class UISystem extends createSystem({
 		required: [PanelUI, PanelDocument],
 		where: [eq(PanelUI, 'config', './ui/settings.json')],
 	},
+	help: {
+		required: [PanelUI, PanelDocument],
+		where: [eq(PanelUI, 'config', './ui/help.json')],
+	},
 }) {
 	private game!: GameManager;
 	private hudDoc: UIKitDocument | null = null;
@@ -70,6 +74,7 @@ export class UISystem extends createSystem({
 	private statsDoc: UIKitDocument | null = null;
 	private lbDoc: UIKitDocument | null = null;
 	private settingsDoc: UIKitDocument | null = null;
+	private helpDoc: UIKitDocument | null = null;
 
 	private hudEntity: Entity | null = null;
 	private menuEntity: Entity | null = null;
@@ -80,6 +85,7 @@ export class UISystem extends createSystem({
 	private statsEntity: Entity | null = null;
 	private lbEntity: Entity | null = null;
 	private settingsEntity: Entity | null = null;
+	private helpEntity: Entity | null = null;
 
 	private selectedMode: GameMode = GameMode.Classic;
 	private selectedDifficulty: Difficulty = Difficulty.Normal;
@@ -87,6 +93,7 @@ export class UISystem extends createSystem({
 	private showingStats = false;
 	private showingLeaderboard = false;
 	private showingSettings = false;
+	private showingHelp = false;
 	private achvPage = 0;
 	private toastTimer = 0;
 	private toastQueue: { title: string; desc: string }[] = [];
@@ -107,6 +114,17 @@ export class UISystem extends createSystem({
 			if (count >= 3) {
 				this.toastQueue.push({ title: 'COMBO', desc: `${count}x Multiplier!` });
 			}
+		};
+		this.game.onTimerUpdate = (remaining: number) => {
+			if (this.hudDoc) {
+				const secs = Math.ceil(remaining);
+				const color = remaining < 10 ? '#ff2222' : remaining < 20 ? '#ffaa00' : '#ff4444';
+				const timerEl = this.hudDoc.getElementById('timer-val') as UIKit.Text | undefined;
+				timerEl?.setProperties({ text: String(secs), color });
+			}
+		};
+		this.game.onTimeUp = () => {
+			this.toastQueue.push({ title: 'TIME UP', desc: 'Game Over!' });
 		};
 	}
 
@@ -180,6 +198,14 @@ export class UISystem extends createSystem({
 			this.settingsEntity = entity;
 			this.wireSettings(doc);
 		});
+
+		this.queries.help.subscribe('qualify', (entity) => {
+			const doc = PanelDocument.data.document[entity.index] as UIKitDocument;
+			if (!doc) return;
+			this.helpDoc = doc;
+			this.helpEntity = entity;
+			this.wireHelp(doc);
+		});
 	}
 
 	private wireMenu(doc: UIKitDocument) {
@@ -196,6 +222,7 @@ export class UISystem extends createSystem({
 			this.showingStats = false;
 			this.showingLeaderboard = false;
 			this.showingSettings = false;
+			this.showingHelp = false;
 			this.achvPage = 0;
 			this.updateAchievementsList();
 		});
@@ -206,6 +233,7 @@ export class UISystem extends createSystem({
 			this.showingAchievements = false;
 			this.showingLeaderboard = false;
 			this.showingSettings = false;
+			this.showingHelp = false;
 			this.updateStatsPanel();
 		});
 
@@ -215,6 +243,7 @@ export class UISystem extends createSystem({
 			this.showingAchievements = false;
 			this.showingStats = false;
 			this.showingSettings = false;
+			this.showingHelp = false;
 			this.updateLeaderboard();
 		});
 
@@ -224,7 +253,17 @@ export class UISystem extends createSystem({
 			this.showingAchievements = false;
 			this.showingStats = false;
 			this.showingLeaderboard = false;
+			this.showingHelp = false;
 			this.updateSettingsSkins();
+		});
+
+		const btnHelp = doc.getElementById('btn-help') as UIKit.Text | undefined;
+		btnHelp?.addEventListener('click', () => {
+			this.showingHelp = true;
+			this.showingAchievements = false;
+			this.showingStats = false;
+			this.showingLeaderboard = false;
+			this.showingSettings = false;
 		});
 
 		// Mode buttons
@@ -234,6 +273,7 @@ export class UISystem extends createSystem({
 			{ id: 'btn-maze', mode: GameMode.Maze },
 			{ id: 'btn-wrap', mode: GameMode.Wrap },
 			{ id: 'btn-daily', mode: GameMode.Daily },
+			{ id: 'btn-timeattack', mode: GameMode.TimeAttack },
 		];
 		for (const { id, mode } of modes) {
 			const btn = doc.getElementById(id) as UIKit.Text | undefined;
@@ -370,6 +410,13 @@ export class UISystem extends createSystem({
 		setText(this.settingsDoc, 'vol-display', `${this.volume}%`);
 	}
 
+	private wireHelp(doc: UIKitDocument) {
+		const btnClose = doc.getElementById('btn-help-close') as UIKit.Text | undefined;
+		btnClose?.addEventListener('click', () => {
+			this.showingHelp = false;
+		});
+	}
+
 	private updateStatsPanel() {
 		if (!this.statsDoc) return;
 		const s = this.game.statsTracker.getStats();
@@ -382,6 +429,7 @@ export class UISystem extends createSystem({
 		setText(this.statsDoc, 'stat-maze', String(s.mazeBest));
 		setText(this.statsDoc, 'stat-wrap', String(s.wrapBest));
 		setText(this.statsDoc, 'stat-daily', String(s.dailyBest));
+		setText(this.statsDoc, 'stat-timed', String(s.timeattackBest));
 	}
 
 	private updateLeaderboard() {
@@ -477,6 +525,7 @@ export class UISystem extends createSystem({
 			{ id: 'btn-maze', mode: GameMode.Maze },
 			{ id: 'btn-wrap', mode: GameMode.Wrap },
 			{ id: 'btn-daily', mode: GameMode.Daily },
+			{ id: 'btn-timeattack', mode: GameMode.TimeAttack },
 		];
 		for (const { id, mode } of modes) {
 			const btn = this.menuDoc.getElementById(id) as UIKit.Text | undefined;
@@ -513,7 +562,7 @@ export class UISystem extends createSystem({
 		if (!this.game) return;
 		const state = this.game.getState();
 
-		const showMenu = state === GameState.Menu && !this.showingAchievements && !this.showingStats && !this.showingLeaderboard && !this.showingSettings;
+		const showMenu = state === GameState.Menu && !this.showingAchievements && !this.showingStats && !this.showingLeaderboard && !this.showingSettings && !this.showingHelp;
 		this.setPanelVisible(this.hudEntity, state === GameState.Playing);
 		this.setPanelVisible(this.menuEntity, showMenu);
 		this.setPanelVisible(this.gameoverEntity, state === GameState.GameOver);
@@ -522,6 +571,7 @@ export class UISystem extends createSystem({
 		this.setPanelVisible(this.statsEntity, this.showingStats && state === GameState.Menu);
 		this.setPanelVisible(this.lbEntity, this.showingLeaderboard && state === GameState.Menu);
 		this.setPanelVisible(this.settingsEntity, this.showingSettings && state === GameState.Menu);
+		this.setPanelVisible(this.helpEntity, this.showingHelp && state === GameState.Menu);
 
 		// Toast handling
 		if (this.toastTimer > 0) {
@@ -542,6 +592,10 @@ export class UISystem extends createSystem({
 			setText(this.hudDoc, 'length-val', String(this.game.getSnakeLength()));
 			setText(this.hudDoc, 'high-val', String(this.game.getHighScore()));
 			setText(this.hudDoc, 'level-val', String(this.game.getLevel()));
+
+			// Show timer for Time Attack
+			const isTA = this.game.isTimeAttackMode();
+			setVisible(this.hudDoc, 'timer-row', isTA);
 
 			// Show status row if there's combo or active power-ups
 			const combo = this.game.getComboCount();

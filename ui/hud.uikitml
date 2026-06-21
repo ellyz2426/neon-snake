@@ -33,4 +33,7 @@
     <text name="combo-val" fontSize="9" color="#ff4488" fontWeight="bold"></text>
     <text name="powerup-val" fontSize="9" color="#00ffff" fontWeight="bold"></text>
   </container>
+  <container name="timer-row" flexDirection="row" justifyContent="center" alignItems="center" width="100%" display="none">
+    <text name="timer-val" fontSize="14" color="#ff4444" fontWeight="bold">60</text>
+  </container>
 </container>

@@ -68,6 +68,16 @@
         cursor="pointer"
         fontWeight="bold"
       >Daily</text>
+      <text
+        name="btn-timeattack"
+        fontSize="10"
+        color="#aaaacc"
+        backgroundColor="#222244"
+        padding="5"
+        borderRadius="4"
+        cursor="pointer"
+        fontWeight="bold"
+      >Timed</text>
     </container>
   </container>
 
@@ -176,5 +186,18 @@
       borderWidth="1"
       cursor="pointer"
     >Gear</text>
+    <text
+      name="btn-help"
+      fontSize="9"
+      color="#44ff88"
+      backgroundColor="#1a1a33"
+      padding="4"
+      paddingLeft="10"
+      paddingRight="10"
+      borderRadius="4"
+      borderColor="#44ff8866"
+      borderWidth="1"
+      cursor="pointer"
+    >Help</text>
   </container>
 </container>

@@ -11,6 +11,7 @@ export interface SessionStats {
 	mazeBest: number;
 	wrapBest: number;
 	dailyBest: number;
+	timeattackBest: number;
 	totalGames: number;
 }
 
@@ -26,6 +27,7 @@ export class StatsTracker {
 		mazeBest: 0,
 		wrapBest: 0,
 		dailyBest: 0,
+		timeattackBest: 0,
 		totalGames: 0,
 	};
 
@@ -48,6 +50,7 @@ export class StatsTracker {
 		else if (mode === 'maze') this.stats.mazeBest = Math.max(this.stats.mazeBest, score);
 		else if (mode === 'wrap') this.stats.wrapBest = Math.max(this.stats.wrapBest, score);
 		else if (mode === 'daily') this.stats.dailyBest = Math.max(this.stats.dailyBest, score);
+		else if (mode === 'timeattack') this.stats.timeattackBest = Math.max(this.stats.timeattackBest, score);
 
 		this.save();
 	}

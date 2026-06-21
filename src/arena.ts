@@ -22,9 +22,22 @@ import {
 	PointsMaterial,
 } from '@iwsdk/core';
 import type { World } from '@iwsdk/core';
-import { GRID_SIZE, CELL_SIZE, BOARD_Y, BOARD_Z } from './types';
+import { GRID_SIZE, CELL_SIZE, BOARD_Y, BOARD_Z, ArenaTheme, ARENA_THEME_DEFS } from './types';
+import type { ArenaThemeDef } from './types';
 
-export function createArena(world: World): Group {
+export interface ArenaRefs {
+	group: Group;
+	gridLineMat: LineBasicMaterial;
+	wallMat: MeshStandardMaterial;
+	boardMat: MeshStandardMaterial;
+	cornerLights: PointLight[];
+	centerLight: PointLight;
+	starMat: PointsMaterial;
+	stars: Points;
+	world: World;
+}
+
+export function createArena(world: World): ArenaRefs {
 	const arena = new Group();
 	arena.position.set(0, BOARD_Y, BOARD_Z);
 	world.scene.add(arena);
@@ -118,6 +131,7 @@ export function createArena(world: World): Group {
 	arena.add(createWall(wallThickness, wallHeight, boardWidth, halfBoard + wallThickness / 2, wallHeight / 2, 0));
 
 	// Corner glow points
+	const cornerLights: PointLight[] = [];
 	const corners = [
 		[-halfBoard, halfBoard],
 		[halfBoard, halfBoard],
@@ -128,6 +142,7 @@ export function createArena(world: World): Group {
 		const light = new PointLight(0x00ccff, 0.3, 1.5);
 		light.position.set(cx, 0.1, cz);
 		arena.add(light);
+		cornerLights.push(light);
 	}
 
 	// Center glow
@@ -135,7 +150,7 @@ export function createArena(world: World): Group {
 	centerLight.position.set(0, 0.15, 0);
 	arena.add(centerLight);
 
-	return arena;
+	return { group: arena, gridLineMat: lineMat, wallMat, boardMat, cornerLights, centerLight, starMat, stars, world };
 }
 
 export function gridToWorld(gx: number, gz: number): Vector3 {
@@ -145,4 +160,27 @@ export function gridToWorld(gx: number, gz: number): Vector3 {
 		0,
 		-halfBoard + (gz + 0.5) * CELL_SIZE,
 	);
+}
+
+export function applyTheme(refs: ArenaRefs, theme: ArenaTheme): void {
+	const def = ARENA_THEME_DEFS.find(t => t.id === theme) ?? ARENA_THEME_DEFS[0];
+
+	refs.boardMat.color.setHex(def.boardColor);
+	refs.gridLineMat.color.setHex(def.gridColor);
+	refs.wallMat.color.setHex(def.wallColor);
+	refs.wallMat.emissive.setHex(def.wallEmissive);
+
+	for (const light of refs.cornerLights) {
+		light.color.setHex(def.cornerLightColor);
+	}
+	refs.centerLight.color.setHex(def.centerLightColor);
+
+	refs.starMat.color.setHex(def.starColor);
+
+	if (refs.world.scene.fog instanceof FogExp2) {
+		refs.world.scene.fog.color.setHex(def.fogColor);
+	}
+	if (refs.world.scene.background instanceof Color) {
+		refs.world.scene.background.setHex(def.bgColor);
+	}
 }
